@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.11.14] - 2026-09-30
+- EN: This patch prevents nested or repeated model headings from becoming duplicate TikTok product-identification modules by tightening result parsing and the output heading contract. See [Release Notes (EN)](releases/v2.11.14.en.md).
+- 中文：本次补丁收紧商品卡结果解析和输出标题约束，避免模型内部的嵌套或重复标题被错误拆成多个“商品识别”模块。参见 [版本说明（中文）](releases/v2.11.14.zh-CN.md)。
+
 ## [2.11.13] - 2026-09-30
 - EN: This patch completes the multilingual copy for the dedicated TikTok product-card history page and keeps the new history entry point consistent across supported locales. See [Release Notes (EN)](releases/v2.11.13.en.md).
 - 中文：本次补丁补齐独立 TikTok 商品卡历史页面的多语言文案，并确保新增历史记录入口在所有支持的语言中保持一致。参见 [版本说明（中文）](releases/v2.11.13.zh-CN.md)。

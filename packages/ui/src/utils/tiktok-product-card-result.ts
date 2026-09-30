@@ -57,7 +57,9 @@ export const parseTikTokProductCardSections = (markdown: string): TikTokProductC
   const source = String(markdown || '').trim()
   if (!source) return []
 
-  const headingPattern = /^#{1,3}\s+(.+?)\s*$/gm
+  // Only numbered top-level headings are section boundaries. Nested headings
+  // inside a section can mention the same business term and must stay content.
+  const headingPattern = /^#{1,2}\s+(\d{1,2}\s*[.)\-:]?\s+.+?)\s*$/gm
   const matches = Array.from(source.matchAll(headingPattern))
     .map((match) => ({
       index: match.index ?? 0,
@@ -77,11 +79,13 @@ export const parseTikTokProductCardSections = (markdown: string): TikTokProductC
     const content = source.slice(match.end, nextIndex).trim()
     const definition = match.definition!
 
-    sections.push({
-      key: definition.key,
-      title: definition.title,
-      content,
-    })
+    const existingSection = sections.find((section) => section.key === definition.key)
+    if (existingSection) {
+      existingSection.content = [existingSection.content, content].filter(Boolean).join('\n\n')
+      return
+    }
+
+    sections.push({ key: definition.key, title: definition.title, content })
   })
 
   const preamble = source.slice(0, matches[0].index).trim()

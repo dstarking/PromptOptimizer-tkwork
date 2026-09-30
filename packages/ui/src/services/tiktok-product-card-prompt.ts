@@ -93,7 +93,7 @@ Use exactly these Markdown headings and this order. Start every heading with ## 
 ## 13. Recommended A/B Test
 ## 14. Seller Confirmation Required
 
-Do not omit a section. Do not place consumer-facing content outside these sections. Prefer explicit Needs Seller Confirmation over unsupported certainty.`
+Do not omit a section. Use each numbered section heading exactly once. Do not create any other Markdown headings inside a section; use bold labels or plain text for subsections instead. Do not place consumer-facing content outside these sections. Prefer explicit Needs Seller Confirmation over unsupported certainty.`
 
 export const buildTikTokProductCardUserPrompt = (
   inputs: TikTokProductCardInputs = {},

@@ -39,4 +39,24 @@ describe('parseTikTokProductCardSections', () => {
       },
     ])
   })
+
+  it('ignores nested headings and merges repeated numbered sections', () => {
+    const sections = parseTikTokProductCardSections([
+      '## 01. Product Identification',
+      'First identification detail.',
+      '',
+      '### Product Identification',
+      'Nested detail that belongs to the same section.',
+      '',
+      '## 02. Confirmed Product Information',
+      'Confirmed information.',
+      '',
+      '## 01. Product Identification',
+      'Repeated section detail.',
+    ].join('\n'))
+
+    expect(sections.map((section) => section.key)).toEqual(['identification', 'confirmed'])
+    expect(sections[0]?.content).toContain('Nested detail that belongs to the same section.')
+    expect(sections[0]?.content).toContain('Repeated section detail.')
+  })
 })
