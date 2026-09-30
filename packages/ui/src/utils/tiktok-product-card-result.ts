@@ -5,20 +5,20 @@ export interface TikTokProductCardSection {
 }
 
 export const TIKTOK_PRODUCT_CARD_SECTION_DEFINITIONS = [
-  { key: 'identification', title: 'Product Identification' },
-  { key: 'confirmed', title: 'Confirmed Product Information' },
-  { key: 'confirmation', title: 'Needs Seller Confirmation' },
-  { key: 'selling-points', title: 'Core Selling Points' },
-  { key: 'titles', title: 'SEO Product Titles' },
-  { key: 'keywords', title: 'SEO Keywords' },
-  { key: 'description', title: 'Final Product Description' },
-  { key: 'gallery', title: '9-Image Product Gallery Strategy' },
-  { key: 'main-image-concepts', title: 'Main Image Concepts' },
-  { key: 'main-image-prompts', title: 'Main Image AI Prompts' },
-  { key: 'image-prompts', title: 'Image 2-9 AI Prompts' },
-  { key: 'ctr', title: 'CTR Optimisation Analysis' },
-  { key: 'ab-test', title: 'Recommended A/B Test' },
-  { key: 'seller-confirmation', title: 'Seller Confirmation Required' },
+  { key: 'identification', title: '商品识别', aliases: ['Product Identification'] },
+  { key: 'confirmed', title: '已确认的商品信息', aliases: ['Confirmed Product Information'] },
+  { key: 'confirmation', title: '待卖家确认的信息', aliases: ['Needs Seller Confirmation'] },
+  { key: 'selling-points', title: '核心卖点', aliases: ['Core Selling Points'] },
+  { key: 'titles', title: 'SEO 商品标题', aliases: ['SEO Product Titles'] },
+  { key: 'keywords', title: 'SEO 关键词', aliases: ['SEO Keywords'] },
+  { key: 'description', title: '最终商品描述', aliases: ['Final Product Description'] },
+  { key: 'gallery', title: '9 图商品画廊方案', aliases: ['9-Image Product Gallery Strategy'] },
+  { key: 'main-image-concepts', title: '主图方案', aliases: ['Main Image Concepts'] },
+  { key: 'main-image-prompts', title: '主图提示词', aliases: ['Main Image AI Prompts'] },
+  { key: 'image-prompts', title: '第 2-9 张图提示词', aliases: ['Image 2-9 AI Prompts'] },
+  { key: 'ctr', title: 'CTR 优化分析', aliases: ['CTR Optimisation Analysis'] },
+  { key: 'ab-test', title: '推荐 A/B 测试', aliases: ['Recommended A/B Test'] },
+  { key: 'seller-confirmation', title: '卖家确认事项', aliases: ['Seller Confirmation Required'] },
 ] as const
 
 const normalizeHeading = (heading: string): string =>
@@ -32,18 +32,20 @@ const resolveSection = (heading: string): (typeof TIKTOK_PRODUCT_CARD_SECTION_DE
   const numberMatch = heading.match(/^\s*(\d{1,2})\s*[.)\-:]?\s*(.*)$/)
   const number = numberMatch ? Number(numberMatch[1]) : null
   const title = normalizeHeading(numberMatch?.[2] || heading)
+  const matchesDefinition = (definition: (typeof TIKTOK_PRODUCT_CARD_SECTION_DEFINITIONS)[number]) =>
+    [definition.title, ...definition.aliases].some((candidate) => {
+      const normalizedCandidate = normalizeHeading(candidate)
+      return title === normalizedCandidate || title.includes(normalizedCandidate)
+    })
 
   if (number !== null && number >= 1 && number <= TIKTOK_PRODUCT_CARD_SECTION_DEFINITIONS.length) {
     const byNumber = TIKTOK_PRODUCT_CARD_SECTION_DEFINITIONS[number - 1]
-    if (!title || normalizeHeading(byNumber.title) === title || title.includes(normalizeHeading(byNumber.title))) {
+    if (!title || matchesDefinition(byNumber)) {
       return byNumber
     }
   }
 
-  return TIKTOK_PRODUCT_CARD_SECTION_DEFINITIONS.find((definition) => {
-    const normalizedTitle = normalizeHeading(definition.title)
-    return title === normalizedTitle || title.includes(normalizedTitle)
-  }) ?? null
+  return TIKTOK_PRODUCT_CARD_SECTION_DEFINITIONS.find(matchesDefinition) ?? null
 }
 
 /**
@@ -66,7 +68,7 @@ export const parseTikTokProductCardSections = (markdown: string): TikTokProductC
     .filter((match) => match.definition)
 
   if (matches.length === 0) {
-    return [{ key: 'full', title: 'Product Card Result', content: source }]
+    return [{ key: 'full', title: '商品卡结果', content: source }]
   }
 
   const sections: TikTokProductCardSection[] = []

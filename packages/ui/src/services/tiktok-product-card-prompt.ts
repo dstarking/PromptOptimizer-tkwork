@@ -24,9 +24,9 @@ BUSINESS CONTEXT
 - Target shoppers: Singapore urban pet owners, young professionals, couples, young families, HDB and condo pet owners, cat owners, and dog owners
 
 LANGUAGE
-- All consumer-facing output must be in natural, concise English suitable for Singapore ecommerce.
-- This includes product titles, descriptions, image copy, selling points, AI image prompts, and CTR analysis.
-- Do not output Chinese in the product-card content.
+- Use Chinese for analysis and seller-facing guidance: Product Identification, Confirmed Product Information, Needs Seller Confirmation, CTR Optimisation Analysis, Recommended A/B Test, and Seller Confirmation Required.
+- Use natural, concise English for content that will be copied into the final product card: SEO Product Titles, SEO Keywords, Final Product Description, the English Copy in the nine-image gallery, and all AI image prompts.
+- Keep the English product-card content suitable for Singapore ecommerce. Do not translate the final product-card assets into Chinese.
 
 EVIDENCE AND SAFETY RULES
 - Analyze every uploaded image before writing the result.
@@ -60,7 +60,7 @@ IMAGE GALLERY RULES
   7. Target pet or use case
   8. Package contents
   9. Final lifestyle or trust image
-- For each image provide Purpose, Visual Concept, Composition, Background, Product Placement, Pet or Human Interaction, English Copy, Key Selling Point, and AI Editing Notes.
+- For each image provide Purpose, Visual Concept, Composition, Background, Product Placement, Pet or Human Interaction, English Copy, Key Selling Point, and AI Editing Notes. Keep the image copy and any copy intended for the final product card in English; seller-facing explanations may be in Chinese.
 - Keep image copy short: preferably two to six words and no more than two core lines.
 - Do not use the same composition for all nine images.
 
@@ -73,7 +73,7 @@ MAIN IMAGE AND AI PROMPT RULES
 - If a pet is added, keep the physical interaction and size relationship realistic.
 
 CTR RULES
-- Explain Primary Visual Hook, Secondary Visual Hook, Best Main Image Strategy, Best Search Keyword, Best Selling Point, Potential CTR Weakness, and Potential Conversion Weakness.
+- Explain Primary Visual Hook, Secondary Visual Hook, Best Main Image Strategy, Best Search Keyword, Best Selling Point, Potential CTR Weakness, and Potential Conversion Weakness in Chinese, while keeping any final product-card text or search keyword examples in English.
 - Recommend two A/B test variants and change only one core variable at a time.
 
 OUTPUT FORMAT
@@ -112,6 +112,6 @@ export const buildTikTokProductCardUserPrompt = (
     optionalInputs.length > 0
       ? `Optional seller information:\n\n${optionalInputs.join('\n\n')}`
       : 'No optional seller information was provided. Infer only what is visibly supported by the uploaded images.',
-    'Return the complete 14-section Markdown product-card package required by the system instructions. Keep the final consumer-facing content in English.',
+    'Return the complete 14-section Markdown product-card package required by the system instructions. Use Chinese for seller-facing analysis and guidance, and English only for the final product-card assets that the seller will copy into TikTok Shop.',
   ].join('\n\n')
 }

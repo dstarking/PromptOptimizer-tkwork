@@ -11,41 +11,38 @@
         - 导航操作直接调用 router.push
     -->
     <NSpace :size="12" align="center" data-testid="core-nav">
-        <template v-if="!isTikTokProductCardRoute">
-            <!-- 功能模式选择器 -->
-            <FunctionModeSelector
-                :modelValue="functionMode"
-                :allow-reselect="allowWorkspaceReselect"
-                @change="handleFunctionModeChange"
-            />
+        <!-- 功能模式选择器 -->
+        <FunctionModeSelector
+            :modelValue="functionMode"
+            :allow-reselect="allowWorkspaceReselect"
+            @change="handleFunctionModeChange"
+        />
 
-            <!-- 子模式选择器 - 基础模式 -->
-            <OptimizationModeSelectorUI
-                v-if="functionMode === 'basic'"
-                :modelValue="basicSubMode"
-                functionMode="basic"
-                :allow-reselect="allowWorkspaceReselect"
-                @change="handleBasicSubModeChange"
-            />
+        <!-- 子模式选择器 - 基础模式 -->
+        <OptimizationModeSelectorUI
+            v-if="functionMode === 'basic'"
+            :modelValue="basicSubMode"
+            functionMode="basic"
+            :allow-reselect="allowWorkspaceReselect"
+            @change="handleBasicSubModeChange"
+        />
 
-            <!-- 子模式选择器 - 上下文模式 -->
-            <OptimizationModeSelectorUI
-                v-if="functionMode === 'pro'"
-                :modelValue="proSubMode"
-                functionMode="pro"
-                :allow-reselect="allowWorkspaceReselect"
-                @change="handleProSubModeChange"
-            />
+        <!-- 子模式选择器 - 上下文模式 -->
+        <OptimizationModeSelectorUI
+            v-if="functionMode === 'pro'"
+            :modelValue="proSubMode"
+            functionMode="pro"
+            :allow-reselect="allowWorkspaceReselect"
+            @change="handleProSubModeChange"
+        />
 
-            <!-- 子模式选择器 - 图像模式 -->
-            <ImageModeSelector
-                v-if="functionMode === 'image'"
-                :modelValue="imageSubMode"
-                :allow-reselect="allowWorkspaceReselect"
-                @change="handleImageSubModeChange"
-            />
-        </template>
-
+        <!-- 子模式选择器 - 图像模式 -->
+        <ImageModeSelector
+            v-if="functionMode === 'image'"
+            :modelValue="imageSubMode"
+            :allow-reselect="allowWorkspaceReselect"
+            @change="handleImageSubModeChange"
+        />
         <NButton
             size="small"
             :type="isTikTokProductCardRoute ? 'primary' : 'tertiary'"

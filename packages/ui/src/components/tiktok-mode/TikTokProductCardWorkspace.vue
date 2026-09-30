@@ -1,5 +1,5 @@
 <template>
-  <div class="tiktok-product-card-workspace">
+  <div class="tiktok-product-card-workspace" @paste="handlePaste">
     <div class="tiktok-product-card-header">
       <div>
         <NText tag="h1" class="tiktok-product-card-title">
@@ -15,19 +15,6 @@
           :options="modelSelection.textModelOptions.value"
           :refresh-models="modelSelection.refreshTextModels"
           :disabled="isGenerating"
-        />
-        <SelectWithConfig
-          v-model="selectedOptimizeModelKeyModel"
-          :options="modelSelection.textModelOptions.value"
-          :get-primary="OptionAccessors.getPrimary"
-          :get-secondary="OptionAccessors.getSecondary"
-          :get-value="OptionAccessors.getValue"
-          :placeholder="t('model.select.placeholder')"
-          :disabled="isGenerating"
-          :show-config-action="true"
-          :show-empty-config-c-t-a="true"
-          @focus="modelSelection.refreshTextModels"
-          @config="() => openModelManager('text')"
         />
       </div>
     </div>
@@ -236,13 +223,11 @@ import {
 import type { ImageInputRef } from '@prompt-optimizer/core'
 
 import MarkdownRenderer from '../MarkdownRenderer.vue'
-import SelectWithConfig from '../SelectWithConfig.vue'
 import TextModelQuickSwitch from '../TextModelQuickSwitch.vue'
 import { useWorkspaceModelSelection } from '../../composables/workspaces/useWorkspaceModelSelection'
 import { useClipboard } from '../../composables/ui/useClipboard'
 import { useImageInputPreparation } from '../../composables/image/useImageInputPreparation'
 import { useToast } from '../../composables/ui/useToast'
-import { OptionAccessors } from '../../utils/data-transformer'
 import { fileToImageInputRef } from '../../utils/image-compression'
 import { parseTikTokProductCardSections } from '../../utils/tiktok-product-card-result'
 import {
@@ -289,10 +274,6 @@ const toast = useToast()
 const clipboard = useClipboard()
 const { prepareFiles } = useImageInputPreparation()
 const services = inject<Ref<AppServices | null>>('services', ref<AppServices | null>(null))
-const openModelManager = inject<(tab?: 'text' | 'image' | 'function') => void>(
-  'openModelManager',
-  () => undefined,
-)
 
 const modelSession = reactive<ProductCardModelSession>({
   selectedOptimizeModelKey: '',
@@ -337,10 +318,7 @@ const createId = () => {
 
 const openFilePicker = () => fileInputRef.value?.click()
 
-const handleFileSelection = async (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const files = Array.from(input.files || [])
-  input.value = ''
+const addProductImages = async (files: readonly File[]) => {
   if (files.length === 0) return
 
   const remaining = MAX_PRODUCT_IMAGES - uploadedImages.value.length
@@ -368,6 +346,31 @@ const handleFileSelection = async (event: Event) => {
   } finally {
     isPreparingImages.value = false
   }
+}
+
+const handleFileSelection = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  input.value = ''
+  await addProductImages(files)
+}
+
+const handlePaste = async (event: ClipboardEvent) => {
+  if (isPreparingImages.value) return
+
+  const clipboardItems = Array.from(event.clipboardData?.items || [])
+  const filesFromItems = clipboardItems
+    .filter((item) => item.kind === 'file' && item.type.startsWith('image/'))
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => Boolean(file))
+  const files = filesFromItems.length > 0
+    ? filesFromItems
+    : Array.from(event.clipboardData?.files || []).filter((file) => file.type.startsWith('image/'))
+
+  if (files.length === 0) return
+
+  event.preventDefault()
+  await addProductImages(files)
 }
 
 const removeImage = (id: string) => {
@@ -679,12 +682,26 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(300px, 0.9fr) minmax(420px, 1.5fr);
   gap: 16px;
   min-height: 560px;
+  align-items: start;
 }
 
 .tiktok-product-card-input,
 .tiktok-product-card-result {
   min-width: 0;
   min-height: 0;
+}
+
+.tiktok-product-card-input {
+  align-self: start;
+  height: max-content;
+}
+
+.tiktok-product-card-input :deep(.n-card__content) {
+  min-height: max-content;
+}
+
+.tiktok-product-card-result {
+  align-self: stretch;
 }
 
 .tiktok-product-card-input :deep(.n-card__content),

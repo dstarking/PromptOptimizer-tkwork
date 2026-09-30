@@ -21,6 +21,11 @@ describe('parseTikTokProductCardSections', () => {
     ])
     expect(sections[0]?.content).toContain('Product type: pet bowl')
     expect(sections[2]?.content).toContain('Confirm the material')
+    expect(sections.map((section) => section.title)).toEqual([
+      '商品识别',
+      '已确认的商品信息',
+      '卖家确认事项',
+    ])
   })
 
   it('keeps unstructured provider output visible as a fallback block', () => {
@@ -29,7 +34,7 @@ describe('parseTikTokProductCardSections', () => {
     expect(sections).toEqual([
       {
         key: 'full',
-        title: 'Product Card Result',
+        title: '商品卡结果',
         content: 'The provider ignored the heading contract.',
       },
     ])

@@ -7,7 +7,7 @@ const messages = {
     inputTitle: 'Product Information',
     imageRequired: 'Product Images (Required)',
     uploadImages: 'Upload Product Images',
-    uploadHint: 'JPG / JPEG / PNG, up to 9 images. At least one image is required.',
+    uploadHint: 'JPG / JPEG / PNG, up to 9 images. At least one image is required. You can also press Ctrl+V to paste an image.',
     selectedImages: '{count} image(s) uploaded',
     removeImage: 'Remove image',
     optionalInputs: 'Additional Information (Optional)',

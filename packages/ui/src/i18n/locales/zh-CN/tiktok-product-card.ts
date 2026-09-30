@@ -7,7 +7,7 @@ const messages = {
     inputTitle: '商品信息',
     imageRequired: '商品图片（必传）',
     uploadImages: '上传商品图片',
-    uploadHint: '支持 JPG / JPEG / PNG，最多 9 张。至少需要一张图片。',
+    uploadHint: '支持 JPG / JPEG / PNG，最多 9 张。至少需要一张图片，也可以直接按 Ctrl+V 粘贴图片。',
     selectedImages: '已上传 {count} 张图片',
     removeImage: '移除图片',
     optionalInputs: '补充信息（可选）',
