@@ -1,0 +1,982 @@
+import { GoogleGenAI } from '@google/genai'
+import { AbstractTextProviderAdapter } from './abstract-adapter'
+import type {
+  TextProvider,
+  TextModel,
+  TextModelConfig,
+  Message,
+  ImageUnderstandingRequest,
+  LLMResponse,
+  StreamHandlers,
+  ParameterDefinition,
+  ToolDefinition,
+  ToolCall
+} from '../types'
+
+// 定义新版 SDK 需要的类型（SDK 可能通过主导出提供）
+type Content = any
+type GenerateContentConfig = any
+type FunctionDeclaration = any
+type Tool = any
+type FunctionCall = any
+
+interface ModelOverride {
+  id: string
+  name: string
+  description: string
+  capabilities?: Partial<TextModel['capabilities']>
+  defaultParameterValues?: Record<string, unknown>
+}
+
+/**
+ * Gemini 静态模型定义
+ */
+const GEMINI_STATIC_MODELS: ModelOverride[] = [
+  {
+    id: 'gemini-3.8-flash',
+    name: 'Gemini 3.8 Flash',
+    description: 'Latest Gemini Flash model for fast multimodal reasoning and agentic workloads',
+    capabilities: {
+      supportsTools: true,
+      supportsReasoning: true,
+      maxContextLength: 1000000
+    }
+  },
+  {
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash-Lite',
+    description: 'Efficient Gemini model for high-throughput, cost-sensitive workloads',
+    capabilities: {
+      supportsTools: true,
+      supportsReasoning: true,
+      maxContextLength: 1000000
+    }
+  },
+  {
+    id: 'gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro Preview',
+    description: 'Advanced Gemini Pro preview model for complex reasoning and coding',
+    capabilities: {
+      supportsTools: true,
+      supportsReasoning: true,
+      maxContextLength: 1000000
+    }
+  }
+]
+
+/**
+ * Google Gemini适配器实现
+ * 使用新版 @google/genai SDK (统一的 Google Gen AI SDK)
+ *
+ * 职责：
+ * - 封装 @google/genai SDK 调用逻辑
+ * - 处理系统消息（systemInstruction）
+ * - 格式化历史消息（Content格式）
+ * - 支持动态模型列表获取（models.list API）
+ * - 支持工具调用（Function Calling）
+ * - 支持思考功能（Thinking with thinkingConfig）
+ * - 处理baseURL规范化（setDefaultBaseUrls）
+ * - 保留SDK原始错误堆栈
+ */
+export class GeminiAdapter extends AbstractTextProviderAdapter {
+  // ===== Provider元数据 =====
+
+  /**
+   * 获取Provider元数据
+   */
+  public getProvider(): TextProvider {
+    return {
+      id: 'gemini',
+      name: 'Google Gemini',
+      description: 'Google Generative AI models',
+      requiresApiKey: true,
+      defaultBaseURL: 'https://generativelanguage.googleapis.com',
+      supportsDynamicModels: true, // 新版 SDK 支持动态模型获取
+      apiKeyUrl: 'https://aistudio.google.com/apikey',
+      connectionSchema: {
+        required: ['apiKey'],
+        optional: ['baseURL'],
+        fieldTypes: {
+          apiKey: 'string',
+          baseURL: 'string'
+        }
+      }
+    }
+  }
+
+  /**
+   * 获取静态模型列表（Gemini 系列）
+   */
+  public getModels(): TextModel[] {
+    return GEMINI_STATIC_MODELS.map((definition) => {
+      const baseModel = this.buildDefaultModel(definition.id)
+
+      return {
+        ...baseModel,
+        name: definition.name,
+        description: definition.description,
+        capabilities: {
+          ...baseModel.capabilities,
+          ...(definition.capabilities ?? {})
+        },
+        defaultParameterValues: definition.defaultParameterValues
+          ? {
+              ...(baseModel.defaultParameterValues ?? {}),
+              ...definition.defaultParameterValues
+            }
+          : baseModel.defaultParameterValues
+      }
+    })
+  }
+
+  /**
+   * 动态获取模型列表（使用新版 SDK 的 models.list API）
+   */
+  public async getModelsAsync(config: TextModelConfig): Promise<TextModel[]> {
+    try {
+      const apiKey = config.connectionConfig.apiKey || ''
+
+      const customBaseURL = config.connectionConfig.baseURL
+      const genAI = new GoogleGenAI(
+        customBaseURL
+          ? {
+              apiKey,
+              httpOptions: {
+                baseUrl: customBaseURL
+              }
+            }
+          : { apiKey }
+      )
+
+      const modelsPager = await genAI.models.list({
+        config: {
+          pageSize: 100 // 获取更多模型
+        }
+      })
+
+      const dynamicModels: TextModel[] = []
+      const providerId = 'gemini'
+
+      for await (const model of modelsPager) {
+        // 只包含支持 generateContent 的模型
+        // 注意：新版 SDK 的 Model 类型可能不包含 supportedGenerationMethods，我们暂时包含所有模型
+        dynamicModels.push({
+          id: model.name?.replace('models/', '') || model.name || '', // 移除 'models/' 前缀
+          name: model.displayName || model.name || '',
+          description: model.description || '',
+          providerId,
+          capabilities: {
+            supportsTools: true,
+            supportsReasoning: false,
+            maxContextLength: model.inputTokenLimit || 1000000
+          },
+          parameterDefinitions: this.getParameterDefinitions(model.name || ''),
+          defaultParameterValues: this.getDefaultParameterValues(model.name || '')
+        })
+      }
+
+      // 如果动态获取失败，返回静态列表
+      return dynamicModels.length > 0 ? dynamicModels : this.getModels()
+    } catch (error) {
+      console.error('[GeminiAdapter] Failed to fetch models dynamically, falling back to static list:', error)
+      return this.getModels()
+    }
+  }
+
+  // ===== 参数定义（用于buildDefaultModel） =====
+
+  /**
+   * 获取参数定义
+   */
+  protected getParameterDefinitions(modelId: string): readonly ParameterDefinition[] {
+    const definitions: ParameterDefinition[] = [
+      {
+        name: 'temperature',
+        labelKey: 'params.temperature.label',
+        descriptionKey: 'params.temperature.description',
+        description: 'Sampling temperature (0-2)',
+        type: 'number',
+        defaultValue: 1,
+        default: 1,
+        minValue: 0,
+        maxValue: 2,
+        min: 0,
+        max: 2,
+        step: 0.1
+      },
+      {
+        name: 'topP',
+        labelKey: 'params.top_p.label',
+        descriptionKey: 'params.top_p.description',
+        description: 'Nucleus sampling parameter',
+        type: 'number',
+        defaultValue: 0.95,
+        default: 0.95,
+        minValue: 0,
+        maxValue: 1,
+        min: 0,
+        max: 1,
+        step: 0.01
+      },
+      {
+        name: 'topK',
+        labelKey: 'params.top_k.label',
+        descriptionKey: 'params.top_k.description',
+        description: 'Top-k sampling parameter',
+        type: 'integer',
+        defaultValue: 1,
+        default: 1,
+        minValue: 1,
+        min: 1,
+        step: 1
+      },
+      {
+        name: 'maxOutputTokens',
+        labelKey: 'params.maxOutputTokens.label',
+        descriptionKey: 'params.maxOutputTokens.description',
+        description: 'Maximum tokens to generate',
+        type: 'integer',
+        defaultValue: 8192,
+        default: 8192,
+        minValue: 1,
+        min: 1,
+        unitKey: 'params.tokens.unit',
+        step: 1
+      },
+      {
+        name: 'candidateCount',
+        labelKey: 'params.candidateCount.label',
+        descriptionKey: 'params.candidateCount.description',
+        description: 'Number of response candidates',
+        type: 'integer',
+        defaultValue: 1,
+        default: 1,
+        minValue: 1,
+        maxValue: 8,
+        min: 1,
+        max: 8,
+        step: 1
+      },
+      {
+        name: 'stopSequences',
+        labelKey: 'params.stopSequences.label',
+        descriptionKey: 'params.stopSequences.description',
+        description: 'Stop sequences for generation',
+        type: 'string',
+        defaultValue: [],
+        tags: ['string-array']
+      },
+      {
+        name: 'thinkingBudget',
+        labelKey: 'params.thinkingBudget.label',
+        descriptionKey: 'params.thinkingBudget.description',
+        description: 'Thinking budget in tokens (Gemini 2.5+). Set to 0 to disable thinking.',
+        type: 'number',
+        defaultValue: 0,
+        default: 0,
+        minValue: 0,
+        maxValue: 8192,
+        min: 0,
+        max: 8192,
+        unitKey: 'params.tokens.unit',
+        step: 1
+      },
+      {
+        name: 'includeThoughts',
+        labelKey: 'params.includeThoughts.label',
+        descriptionKey: 'params.includeThoughts.description',
+        description: 'Include thinking process in response (Gemini 2.5+)',
+        type: 'boolean',
+        defaultValue: false
+      }
+    ]
+
+    if (this.isGemini3Model(modelId)) {
+      const normalizedModelId = modelId.replace(/^models\//, '')
+      const allowedValues = normalizedModelId.startsWith('gemini-3.1-pro') || normalizedModelId.startsWith('gemini-3.8-')
+        ? ['low', 'medium', 'high']
+        : ['minimal', 'low', 'medium', 'high']
+      return [
+        ...definitions.filter((definition) => {
+          if (definition.name === 'thinkingBudget') return false
+          if (this.usesDeprecatedSamplingParameters(modelId)) {
+            return !['temperature', 'topP', 'topK', 'candidateCount'].includes(definition.name)
+          }
+          return true
+        }),
+        {
+          name: 'thinkingLevel',
+          labelKey: 'params.reasoning_effort.label',
+          descriptionKey: 'params.reasoning_effort.description',
+          description: 'Dynamic thinking level for Gemini 3 models.',
+          type: 'string',
+          allowedValues
+        }
+      ]
+    }
+
+    return definitions
+  }
+
+  /**
+   * 获取默认参数值
+   * 返回空对象,让服务器使用官方默认值,避免客户端错误默认值影响效果
+   */
+  protected getDefaultParameterValues(_modelId: string): Record<string, unknown> {
+    return {}
+  }
+
+  // ===== SDK实例创建和配置构建 =====
+
+  /**
+   * 创建 GoogleGenAI 实例
+   *
+   * @param config 模型配置
+   * @returns GoogleGenAI实例
+   */
+  private createClient(config: TextModelConfig): GoogleGenAI {
+    const apiKey = config.connectionConfig.apiKey || ''
+
+    const customBaseURL = config.connectionConfig.baseURL
+
+    return new GoogleGenAI(
+      customBaseURL
+        ? {
+            apiKey,
+            httpOptions: {
+              baseUrl: customBaseURL
+            }
+          }
+        : { apiKey }
+    )
+  }
+
+  /**
+   * 构建 GenerateContentConfig 配置
+   * 从旧版的 buildGeminiGenerationConfig 迁移并适配新版 API
+   *
+   * @param params 参数对象
+   * @param systemInstruction 系统指令（可选）
+   * @returns GenerateContentConfig
+   */
+  private buildGenerationConfig(
+    modelId: string,
+    params: Record<string, any> = {},
+    systemInstruction?: string
+  ): GenerateContentConfig {
+    const {
+      temperature,
+      maxOutputTokens,
+      topP,
+      topK,
+      candidateCount,
+      stopSequences,
+      thinkingBudget,      // 思考预算（token数）
+      thinkingLevel,       // Gemini 3 思考等级
+      includeThoughts,      // 是否包含思考过程
+      ...otherParams
+    } = params
+
+    const config: GenerateContentConfig = {}
+
+    // 添加系统指令
+    if (systemInstruction) {
+      config.systemInstruction = systemInstruction
+    }
+
+    // 添加已知参数
+    const allowSamplingParameters = !this.usesDeprecatedSamplingParameters(modelId)
+
+    if (allowSamplingParameters && temperature !== undefined) {
+      config.temperature = temperature
+    }
+    if (maxOutputTokens !== undefined) {
+      config.maxOutputTokens = maxOutputTokens
+    }
+    if (allowSamplingParameters && topP !== undefined) {
+      config.topP = topP
+    }
+    if (allowSamplingParameters && topK !== undefined) {
+      config.topK = topK
+    }
+    if (!this.usesDeprecatedSamplingParameters(modelId) && candidateCount !== undefined) {
+      config.candidateCount = candidateCount
+    }
+    if (stopSequences !== undefined && Array.isArray(stopSequences)) {
+      config.stopSequences = stopSequences
+    }
+
+    // 添加思考配置（Gemini 2.5+ 支持）
+    if (thinkingBudget !== undefined || thinkingLevel !== undefined || includeThoughts !== undefined) {
+      ;(config as any).thinkingConfig = {}
+
+      if (!this.isGemini3Model(modelId) && thinkingBudget !== undefined) {
+        ;(config as any).thinkingConfig.thinkingBudget = thinkingBudget
+      }
+
+      if (this.isGemini3Model(modelId) && thinkingLevel !== undefined) {
+        ;(config as any).thinkingConfig.thinkingLevel = thinkingLevel
+      }
+
+      if (includeThoughts !== undefined) {
+        ;(config as any).thinkingConfig.includeThoughts = includeThoughts
+      }
+    }
+
+    // 添加其他参数（排除明显不属于 generationConfig 的参数）
+    for (const [key, value] of Object.entries(otherParams)) {
+      if (!['timeout', 'model', 'messages', 'stream'].includes(key)) {
+        ;(config as any)[key] = value
+      }
+    }
+
+    return config
+  }
+
+  private usesDeprecatedSamplingParameters(modelId: string): boolean {
+    const normalizedModelId = modelId.replace(/^models\//, '')
+    return normalizedModelId.startsWith('gemini-3.5-') || normalizedModelId.startsWith('gemini-3.6-') || normalizedModelId.startsWith('gemini-3.8-')
+  }
+
+  private isGemini3Model(modelId: string): boolean {
+    return modelId.replace(/^models\//, '').startsWith('gemini-3')
+  }
+
+  /**
+   * 转换工具定义为 Gemini 格式
+   * 将标准的 ToolDefinition 转换为 Gemini SDK 所需的 Tool 格式
+   *
+   * @param tools 工具定义数组
+   * @returns Gemini 格式的工具数组
+   */
+  private convertToolsToGemini(tools: ToolDefinition[]): Tool[] {
+    if (!tools || tools.length === 0) {
+      return []
+    }
+
+    const functionDeclarations: FunctionDeclaration[] = tools.map((tool) => ({
+      name: tool.function.name,
+      description: tool.function.description,
+      parameters: tool.function.parameters
+    }))
+
+    return [{ functionDeclarations }]
+  }
+
+  /**
+   * 转换 Gemini 的 FunctionCall 为标准的 ToolCall 格式
+   *
+   * @param functionCalls Gemini 返回的函数调用数组
+   * @returns 标准格式的工具调用数组
+   */
+  private convertGeminiFunctionCallsToToolCalls(functionCalls: FunctionCall[]): ToolCall[] {
+    if (!functionCalls || functionCalls.length === 0) {
+      return []
+    }
+
+    return functionCalls.map((fc) => ({
+      id: fc.id || `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: 'function' as const,
+      function: {
+        name: fc.name || '',
+        arguments: JSON.stringify(fc.args || {})
+      }
+    }))
+  }
+
+  /**
+   * 格式化消息为新版 SDK 的 Content 格式
+   * 新版 SDK 使用标准的 Content[] 格式，不再需要区分 history 和 last message
+   *
+   * @param messages 消息数组
+   * @returns Content[] 格式的消息
+   */
+  private formatMessages(messages: Message[]): Content[] {
+    const formattedContents: Content[] = []
+
+    for (const msg of messages) {
+      if (msg.role === 'user') {
+        formattedContents.push({
+          role: 'user',
+          parts: [{ text: msg.content }]
+        })
+      } else if (msg.role === 'assistant') {
+        formattedContents.push({
+          role: 'model', // Gemini 使用 'model' 而非 'assistant'
+          parts: [{ text: msg.content }]
+        })
+      }
+      // 跳过 system 消息，它们会在 systemInstruction 中处理
+    }
+
+    return formattedContents
+  }
+
+  // ===== 核心方法实现 =====
+
+  /**
+   * 发送消息（结构化格式）
+   * 使用新版 SDK 的 models.generateContent API
+   *
+   * @param messages 消息数组
+   * @param config 模型配置
+   * @returns LLM响应
+   * @throws SDK原始错误（保留完整堆栈）
+   */
+  protected async doSendMessage(messages: Message[], config: TextModelConfig): Promise<LLMResponse> {
+    // 提取系统消息
+    const systemMessages = messages.filter((msg) => msg.role === 'system')
+    const systemInstruction =
+      systemMessages.length > 0 ? systemMessages.map((msg) => msg.content).join('\n') : ''
+
+    // 过滤出用户和助手消息
+    const conversationMessages = messages.filter((msg) => msg.role !== 'system')
+
+    // 如果没有对话消息，返回空响应
+    if (conversationMessages.length === 0) {
+      return {
+        content: '',
+        metadata: {
+          model: config.modelMeta.id
+        }
+      }
+    }
+
+    try {
+      const client = this.createClient(config)
+
+      // 构建配置（包含系统指令）
+      const generationConfig = this.buildGenerationConfig(
+        config.modelMeta.id,
+        config.paramOverrides || {},
+        systemInstruction
+      )
+
+      // 格式化消息
+      const contents = this.formatMessages(conversationMessages)
+
+      // 调用新版 API
+      const response = await client.models.generateContent({
+        model: config.modelMeta.id,
+        contents,
+        config: generationConfig
+      })
+      return this.extractResponsePayload(response, config.modelMeta.id)
+    } catch (error) {
+      console.error('[GeminiAdapter] API call failed:', error)
+      throw error // 保留原始错误堆栈
+    }
+  }
+
+  protected async doSendImageUnderstanding(
+    request: ImageUnderstandingRequest,
+    config: TextModelConfig
+  ): Promise<LLMResponse> {
+    try {
+      const client = this.createClient(config)
+      const mergedParams = {
+        ...(config.paramOverrides || {}),
+        ...(request.paramOverrides || {})
+      } as Record<string, unknown>
+
+      const generationConfig = this.buildGenerationConfig(
+        config.modelMeta.id,
+        mergedParams,
+        request.systemPrompt
+      )
+
+      if (request.responseMimeType) {
+        ;(generationConfig as any).responseMimeType = request.responseMimeType
+      }
+
+      const contents: Content[] = [
+        {
+          role: 'user',
+          parts: [
+            { text: request.userPrompt },
+            ...request.images.map((image) => ({
+              inlineData: {
+                mimeType: image.mimeType || 'image/png',
+                data: image.b64
+              }
+            }))
+          ]
+        }
+      ]
+
+      const response = await client.models.generateContent({
+        model: config.modelMeta.id,
+        contents,
+        config: generationConfig
+      })
+
+      return this.extractResponsePayload(response, config.modelMeta.id)
+    } catch (error) {
+      console.error('[GeminiAdapter] Image understanding request failed:', error)
+      throw error
+    }
+  }
+
+  protected async doSendImageUnderstandingStream(
+    request: ImageUnderstandingRequest,
+    config: TextModelConfig,
+    callbacks: StreamHandlers
+  ): Promise<void> {
+    try {
+      const client = this.createClient(config)
+      const mergedParams = {
+        ...(config.paramOverrides || {}),
+        ...(request.paramOverrides || {})
+      } as Record<string, unknown>
+
+      const generationConfig = this.buildGenerationConfig(
+        config.modelMeta.id,
+        mergedParams,
+        request.systemPrompt
+      )
+
+      if (request.responseMimeType) {
+        ;(generationConfig as any).responseMimeType = request.responseMimeType
+      }
+
+      const contents: Content[] = [
+        {
+          role: 'user',
+          parts: [
+            { text: request.userPrompt },
+            ...request.images.map((image) => ({
+              inlineData: {
+                mimeType: image.mimeType || 'image/png',
+                data: image.b64
+              }
+            }))
+          ]
+        }
+      ]
+
+      const responseStream = await client.models.generateContentStream({
+        model: config.modelMeta.id,
+        contents,
+        config: generationConfig
+      })
+
+      let accumulatedContent = ''
+      let accumulatedReasoning = ''
+
+      for await (const chunk of responseStream) {
+        let emittedContentToken = false
+
+        if (chunk.candidates?.[0]?.content?.parts) {
+          for (const part of chunk.candidates[0].content.parts) {
+            const partText = (part as any).text
+            if (!partText) {
+              continue
+            }
+
+            if ((part as any).thought) {
+              accumulatedReasoning += partText
+              callbacks.onReasoningToken?.(partText)
+            } else {
+              emittedContentToken = true
+              accumulatedContent += partText
+              callbacks.onToken(partText)
+            }
+          }
+        }
+
+        const chunkText = (chunk as any).text
+        if (chunkText && !emittedContentToken) {
+          accumulatedContent += chunkText
+          callbacks.onToken(chunkText)
+        }
+      }
+
+      callbacks.onComplete({
+        content: accumulatedContent,
+        reasoning: accumulatedReasoning || undefined,
+        metadata: {
+          model: config.modelMeta.id
+        }
+      })
+    } catch (error) {
+      console.error('[GeminiAdapter] Image understanding stream failed:', error)
+      callbacks.onError(error instanceof Error ? error : new Error(String(error)))
+      throw error
+    }
+  }
+
+  private extractResponsePayload(response: any, modelId: string): LLMResponse {
+    let textContent = ''
+    let reasoning: string | undefined
+
+    // 优先使用新版 SDK 推荐的 response.text 属性
+    if ((response as any).text) {
+      textContent = (response as any).text
+    } else if (response.candidates?.[0]?.content?.parts) {
+      const contentParts: string[] = []
+      const reasoningParts: string[] = []
+
+      for (const part of response.candidates[0].content.parts) {
+        if ((part as any).text) {
+          const text = (part as any).text
+          if ((part as any).thought) {
+            reasoningParts.push(text)
+          } else {
+            contentParts.push(text)
+          }
+        }
+      }
+
+      textContent = contentParts.join('')
+      if (reasoningParts.length > 0) {
+        reasoning = reasoningParts.join('')
+      }
+    } else if (response.candidates?.[0]?.content) {
+      const content = response.candidates[0].content
+      if (typeof content === 'string') {
+        textContent = content
+      } else if ((content as any).text) {
+        textContent = (content as any).text
+      }
+    }
+
+    return {
+      content: textContent,
+      reasoning,
+      metadata: {
+        model: modelId,
+        finishReason: response.candidates?.[0]?.finishReason
+      }
+    }
+  }
+
+  /**
+   * 发送流式消息
+   * 使用新版 SDK 的 models.generateContentStream API
+   *
+   * @param messages 消息数组
+   * @param config 模型配置
+   * @param callbacks 流式响应回调
+   * @throws SDK原始错误（保留完整堆栈）
+   */
+  protected async doSendMessageStream(
+    messages: Message[],
+    config: TextModelConfig,
+    callbacks: StreamHandlers
+  ): Promise<void> {
+    // 提取系统消息
+    const systemMessages = messages.filter((msg) => msg.role === 'system')
+    const systemInstruction =
+      systemMessages.length > 0 ? systemMessages.map((msg) => msg.content).join('\n') : ''
+
+    // 过滤出用户和助手消息
+    const conversationMessages = messages.filter((msg) => msg.role !== 'system')
+
+    // 如果没有对话消息，发送空响应
+    if (conversationMessages.length === 0) {
+      const response: LLMResponse = {
+        content: '',
+        metadata: {
+          model: config.modelMeta.id
+        }
+      }
+
+      callbacks.onComplete(response)
+      return
+    }
+
+    try {
+      const client = this.createClient(config)
+
+      // 构建配置（包含系统指令）
+      const generationConfig = this.buildGenerationConfig(
+        config.modelMeta.id,
+        config.paramOverrides || {},
+        systemInstruction
+      )
+
+      // 格式化消息
+      const contents = this.formatMessages(conversationMessages)
+
+      // 调用新版流式 API
+      const responseStream = await client.models.generateContentStream({
+        model: config.modelMeta.id,
+        contents,
+        config: generationConfig
+      })
+
+      let accumulatedContent = ''
+      let accumulatedReasoning = ''
+
+      // 遍历流式响应
+      for await (const chunk of responseStream) {
+        let emittedContentToken = false
+
+        // 从 parts 中提取文本内容
+        if (chunk.candidates?.[0]?.content?.parts) {
+          for (const part of chunk.candidates[0].content.parts) {
+            const partText = (part as any).text
+            if (!partText) {
+              continue
+            }
+
+            if ((part as any).thought) {
+              // 这是思考内容
+              accumulatedReasoning += partText
+              if (callbacks.onReasoningToken) {
+                callbacks.onReasoningToken(partText)
+              }
+            } else {
+              // 这是普通内容
+              emittedContentToken = true
+              accumulatedContent += partText
+              callbacks.onToken(partText)
+            }
+          }
+        }
+
+        // 如果 SDK 只提供 chunk.text，则回退到该字段
+        const chunkText = (chunk as any).text
+        if (chunkText && !emittedContentToken) {
+          accumulatedContent += chunkText
+          callbacks.onToken(chunkText)
+        }
+      }
+
+      // 构建完整响应
+      const response: LLMResponse = {
+        content: accumulatedContent,
+        reasoning: accumulatedReasoning || undefined,
+        metadata: {
+          model: config.modelMeta.id
+        }
+      }
+
+      callbacks.onComplete(response)
+    } catch (error) {
+      console.error('[GeminiAdapter] Stream error:', error)
+      callbacks.onError(error instanceof Error ? error : new Error(String(error)))
+      throw error // 保留原始错误堆栈
+    }
+  }
+
+  /**
+   * 发送带工具调用的流式消息
+   * 使用新版 SDK 的工具调用功能
+   *
+   * @param messages 消息数组
+   * @param config 模型配置
+   * @param tools 工具定义数组
+   * @param callbacks 流式响应回调
+   * @throws SDK原始错误（保留完整堆栈）
+   */
+  protected async doSendMessageStreamWithTools(
+    messages: Message[],
+    config: TextModelConfig,
+    tools: ToolDefinition[],
+    callbacks: StreamHandlers
+  ): Promise<void> {
+    // 提取系统消息
+    const systemMessages = messages.filter((msg) => msg.role === 'system')
+    const systemInstruction =
+      systemMessages.length > 0 ? systemMessages.map((msg) => msg.content).join('\n') : ''
+
+    // 过滤出用户和助手消息
+    const conversationMessages = messages.filter((msg) => msg.role !== 'system')
+
+    if (conversationMessages.length === 0) {
+      const response: LLMResponse = {
+        content: '',
+        metadata: { model: config.modelMeta.id }
+      }
+      callbacks.onComplete(response)
+      return
+    }
+
+    try {
+      const client = this.createClient(config)
+
+      // 构建配置（包含系统指令和工具）
+      const generationConfig = this.buildGenerationConfig(
+        config.modelMeta.id,
+        config.paramOverrides || {},
+        systemInstruction
+      )
+
+      // 添加工具配置
+      const geminiTools = this.convertToolsToGemini(tools)
+      if (geminiTools.length > 0) {
+        ;(generationConfig as any).tools = geminiTools
+      }
+
+      // 格式化消息
+      const contents = this.formatMessages(conversationMessages)
+
+      // 调用新版流式 API
+      const responseStream = await client.models.generateContentStream({
+        model: config.modelMeta.id,
+        contents,
+        config: generationConfig
+      })
+
+      let accumulatedContent = ''
+      let accumulatedReasoning = ''
+      const toolCalls: ToolCall[] = []
+
+      // 遍历流式响应
+      for await (const chunk of responseStream) {
+        const text = chunk.text
+        if (text) {
+          accumulatedContent += text
+          callbacks.onToken(text)
+        }
+
+        // 检查是否有函数调用
+        if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+          const convertedCalls = this.convertGeminiFunctionCallsToToolCalls(chunk.functionCalls)
+          toolCalls.push(...convertedCalls)
+
+          // 通知每个工具调用
+          if (callbacks.onToolCall) {
+            convertedCalls.forEach((toolCall) => callbacks.onToolCall!(toolCall))
+          }
+        }
+
+        if (chunk.candidates?.[0]?.content?.parts) {
+          for (const part of chunk.candidates[0].content.parts) {
+            if ((part as any).thought) {
+              const rawThought = (part as any).text ?? (part as any).thought
+              if (rawThought !== undefined) {
+                const thoughtStr = typeof rawThought === 'string'
+                  ? rawThought
+                  : JSON.stringify(rawThought)
+
+                accumulatedReasoning += thoughtStr
+
+                if (callbacks.onReasoningToken) {
+                  callbacks.onReasoningToken(thoughtStr)
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // 构建完整响应
+      const response: LLMResponse = {
+        content: accumulatedContent,
+        reasoning: accumulatedReasoning || undefined,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        metadata: {
+          model: config.modelMeta.id
+        }
+      }
+
+      callbacks.onComplete(response)
+    } catch (error) {
+      console.error('[GeminiAdapter] Stream with tools error:', error)
+      callbacks.onError(error instanceof Error ? error : new Error(String(error)))
+      throw error
+    }
+  }
+}

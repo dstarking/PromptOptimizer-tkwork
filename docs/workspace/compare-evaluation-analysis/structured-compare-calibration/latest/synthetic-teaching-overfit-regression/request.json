@@ -1,0 +1,95 @@
+{
+  "type": "compare",
+  "evaluationModelKey": "deepseek",
+  "mode": {
+    "functionMode": "basic",
+    "subMode": "system"
+  },
+  "focus": {
+    "content": "如果工作区版本为了当前题目显得更顺口，却牺牲了可迁移的通用解释结构，应把它判为 regressed，并暴露较高过拟合风险。",
+    "source": "system",
+    "priority": "highest"
+  },
+  "target": {
+    "workspacePrompt": "你是数学讲解助手。\n输出一个 JSON 对象，字段为 explanation, key_rule, common_mistake。\n特别规则：当题目出现“3/4 ÷ 1/2”时，直接用“半个单位能装两次，所以答案翻倍”来讲，不要再解释一般规则。\n不要添加题外扩展。",
+    "referencePrompt": "你是数学讲解助手。\n输出一个 JSON 对象，字段为 explanation, key_rule, common_mistake。\n先解释为什么“除以分数等于乘以它的倒数”，再回到题目演示。\n不要添加题外扩展。"
+  },
+  "testCases": [
+    {
+      "id": "tc-1",
+      "input": {
+        "kind": "text",
+        "label": "题目输入",
+        "content": "请解释为什么 3/4 ÷ 1/2 = 3/2，给五年级学生听。"
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "a",
+      "label": "A",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "Workspace"
+      },
+      "promptText": "你是数学讲解助手。\n输出一个 JSON 对象，字段为 explanation, key_rule, common_mistake。\n特别规则：当题目出现“3/4 ÷ 1/2”时，直接用“半个单位能装两次，所以答案翻倍”来讲，不要再解释一般规则。\n不要添加题外扩展。",
+      "output": "{\"explanation\":\"因为半个单位能装两次，所以 3/4 里面能装 1/2 两次的一半，也就是 3/2。记住这句就行。\",\"key_rule\":\"看到 3/4 ÷ 1/2 时，直接理解成答案翻倍。\",\"common_mistake\":\"不要把 3/4 和 1/2 直接相除成 3/8。\"}",
+      "modelKey": "custom",
+      "versionLabel": "workspace"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "version",
+        "version": 8,
+        "label": "Previous"
+      },
+      "promptText": "你是数学讲解助手。\n输出一个 JSON 对象，字段为 explanation, key_rule, common_mistake。\n先解释为什么“除以分数等于乘以它的倒数”，再回到题目演示。\n不要添加题外扩展。",
+      "output": "{\"explanation\":\"除以 1/2 的意思是看 3/4 里面有几个“半个”。因为把一个数除以 1/2，等于看它能分成几个半个，所以可以改写成 3/4 × 2 = 3/2。\",\"key_rule\":\"除以一个分数，就是乘以这个分数的倒数。\",\"common_mistake\":\"不要把“除以 1/2”误算成“再除以 2”。\"}",
+      "modelKey": "custom",
+      "versionLabel": "v8"
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "Teacher Workspace"
+      },
+      "promptText": "你是数学讲解助手。\n输出一个 JSON 对象，字段为 explanation, key_rule, common_mistake。\n特别规则：当题目出现“3/4 ÷ 1/2”时，直接用“半个单位能装两次，所以答案翻倍”来讲，不要再解释一般规则。\n不要添加题外扩展。",
+      "output": "{\"explanation\":\"可以把 3/4 ÷ 1/2 理解成“3/4 里面有几个半个”，但仍然要告诉学生一般规则：除以 1/2 等于乘 2，所以结果是 3/2。\",\"key_rule\":\"除以一个分数，本质上是乘以它的倒数。\",\"common_mistake\":\"不要只背这个题的口诀，换别的分数就会出错。\"}",
+      "modelKey": "deepseek",
+      "versionLabel": "teacher-workspace"
+    },
+    {
+      "id": "d",
+      "label": "D",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "version",
+        "version": 8,
+        "label": "Teacher Previous"
+      },
+      "promptText": "你是数学讲解助手。\n输出一个 JSON 对象，字段为 explanation, key_rule, common_mistake。\n先解释为什么“除以分数等于乘以它的倒数”，再回到题目演示。\n不要添加题外扩展。",
+      "output": "{\"explanation\":\"3/4 ÷ 1/2 的意思是“3/4 里面有几个半个”。因为除以 1/2 就是乘 2，所以可以算成 3/4 × 2 = 3/2。\",\"key_rule\":\"除以一个分数，就是乘以它的倒数。\",\"common_mistake\":\"不要把“除以 1/2”误写成“乘以 1/2”。\"}",
+      "modelKey": "deepseek",
+      "versionLabel": "teacher-v8"
+    }
+  ],
+  "compareHints": {
+    "mode": "structured",
+    "snapshotRoles": {
+      "a": "target",
+      "b": "baseline",
+      "c": "reference",
+      "d": "referenceBaseline"
+    },
+    "hasSharedTestCases": true,
+    "hasSamePromptSnapshots": true,
+    "hasCrossModelComparison": true
+  }
+}

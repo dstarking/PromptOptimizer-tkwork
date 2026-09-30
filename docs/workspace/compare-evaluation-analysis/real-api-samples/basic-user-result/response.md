@@ -1,0 +1,73 @@
+# basic-user-result
+
+## Meta
+- Type: `result`
+- Model: `dashscope`
+- Duration: `17528ms`
+- Timestamp: `1773732225083`
+
+## Score
+- Overall: `70`
+
+| Key | Label | Score |
+| --- | --- | --- |
+| `goalAchievement` | 目标达成度 | 80 |
+| `outputQuality` | 输出质量 | 90 |
+| `constraintCompliance` | 约束符合度 | 50 |
+| `promptEffectiveness` | 提示词引导有效性 | 60 |
+
+## Improvements
+
+- 当前执行提示词“写一首诗”过于宽泛，未对诗歌风格、主题或格式做出明确约束，导致模型可能自由发挥，无法保证输出一致性。建议补充如‘五言绝句’或‘表达思念之情’等具体要求。
+- 输出结尾的附加语句（——愿这首诗能寄托你心中的思绪）属于未被请求的元评论内容，违反了输出边界，需在提示词中明确禁止此类额外说明。
+- 若希望提高创作稳定性与可预期性，可在提示词中加入示例或参考风格，例如‘请模仿李白风格写一首五言律诗’。
+
+## Summary
+
+输出完成任务且质量较高，但提示词缺乏清晰约束，且存在输出边界滑移。
+
+## Raw Response JSON
+
+```json
+{
+  "type": "result",
+  "score": {
+    "overall": 70,
+    "dimensions": [
+      {
+        "key": "goalAchievement",
+        "label": "目标达成度",
+        "score": 80
+      },
+      {
+        "key": "outputQuality",
+        "label": "输出质量",
+        "score": 90
+      },
+      {
+        "key": "constraintCompliance",
+        "label": "约束符合度",
+        "score": 50
+      },
+      {
+        "key": "promptEffectiveness",
+        "label": "提示词引导有效性",
+        "score": 60
+      }
+    ]
+  },
+  "improvements": [
+    "当前执行提示词“写一首诗”过于宽泛，未对诗歌风格、主题或格式做出明确约束，导致模型可能自由发挥，无法保证输出一致性。建议补充如‘五言绝句’或‘表达思念之情’等具体要求。",
+    "输出结尾的附加语句（——愿这首诗能寄托你心中的思绪）属于未被请求的元评论内容，违反了输出边界，需在提示词中明确禁止此类额外说明。",
+    "若希望提高创作稳定性与可预期性，可在提示词中加入示例或参考风格，例如‘请模仿李白风格写一首五言律诗’。"
+  ],
+  "summary": "输出完成任务且质量较高，但提示词缺乏清晰约束，且存在输出边界滑移。",
+  "patchPlan": [],
+  "metadata": {
+    "model": "dashscope",
+    "timestamp": 1773732225083,
+    "duration": 17528
+  }
+}
+```
+

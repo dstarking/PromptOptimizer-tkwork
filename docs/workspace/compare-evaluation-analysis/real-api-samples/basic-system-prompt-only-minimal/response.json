@@ -1,0 +1,51 @@
+{
+  "type": "prompt-only",
+  "score": {
+    "overall": 70,
+    "dimensions": [
+      {
+        "key": "goalClarity",
+        "label": "目标清晰度",
+        "score": 85
+      },
+      {
+        "key": "instructionCompleteness",
+        "label": "指令完备度",
+        "score": 60
+      },
+      {
+        "key": "structuralExecutability",
+        "label": "结构可执行性",
+        "score": 75
+      },
+      {
+        "key": "ambiguityControl",
+        "label": "歧义控制",
+        "score": 70
+      },
+      {
+        "key": "robustness",
+        "label": "稳健性",
+        "score": 65
+      }
+    ]
+  },
+  "improvements": [
+    "在提示词中进一步明确强调'不要输出思考过程'，例如使用加粗或重复表述以增强约束力。",
+    "将分类结构拆分为更清晰的子步骤（如：先归类问题类型，再评估风险等级），避免模型因顺序模糊而遗漏关键步骤。"
+  ],
+  "summary": "当前系统提示词基本符合质检任务需求，但对'不输出思考过程'的约束不够强，且分类结构可能导致风险等级被忽略。",
+  "patchPlan": [
+    {
+      "op": "replace",
+      "oldText": "回答前先判断用户问题类型，再输出：问题归类、风险等级、建议回复。",
+      "newText": "回答前仅输出以下内容：1. 问题归类；2. 风险等级；3. 建议回复。不得包含任何额外解释或思考过程。",
+      "instruction": "原句未明确禁止输出思考过程，且分类和风险评估可能被模型混为一谈。修改后通过分步骤与强化约束来提升可执行性和稳健性。"
+    }
+  ],
+  "metadata": {
+    "model": "dashscope",
+    "timestamp": 1773729135763,
+    "duration": 23552
+  }
+}

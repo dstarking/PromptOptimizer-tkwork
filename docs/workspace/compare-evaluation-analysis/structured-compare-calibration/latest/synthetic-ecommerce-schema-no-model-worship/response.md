@@ -1,0 +1,234 @@
+```json
+{
+  "type": "compare",
+  "score": {
+    "overall": 40,
+    "dimensions": [
+      {
+        "key": "goalAchievementRobustness",
+        "label": "目标达成稳定性",
+        "score": 20
+      },
+      {
+        "key": "outputQualityCeiling",
+        "label": "输出质量上限",
+        "score": 60
+      },
+      {
+        "key": "promptPatternQuality",
+        "label": "提示词模式质量",
+        "score": 30
+      },
+      {
+        "key": "crossSnapshotRobustness",
+        "label": "跨快照鲁棒性",
+        "score": 10
+      },
+      {
+        "key": "workspaceTransferability",
+        "label": "对工作区的可迁移性",
+        "score": 30
+      }
+    ]
+  },
+  "improvements": [
+    "当系统提示词明确禁止更改字段名或添加外层包裹对象时，任何此类改动都构成硬边界违例，应避免。",
+    "对于产品亮点（如buyer_highlights）字段，可学习将原文中的适用场景描述（如“适合A和B使用”）提炼并包装为更具概括性和吸引力的营销短语（如“双场景使用：A与B”）。",
+    "在列举产品基础参数（如容量、材质）时，可考虑添加积极的修饰语（如“大容量”、“更稳”）以增强卖点表述，而非简单复制原文。"
+  ],
+  "summary": "Target相比Baseline在输出协议稳定性上出现明确回退；与Reference相比，在亮点提炼的深度和营销感上仍有可学习的差距；且该Prompt改动在Reference侧不被支持，存在较高的过拟合风险，建议审阅。",
+  "patchPlan": [],
+  "metadata": {
+    "compareMode": "structured",
+    "compareStopSignals": {
+      "targetVsBaseline": "regressed",
+      "targetVsReferenceGap": "minor",
+      "improvementHeadroom": "high",
+      "overfitRisk": "high",
+      "stopRecommendation": "review",
+      "stopReasons": [
+        "target regressed vs baseline",
+        "minor learnable gap remains vs reference",
+        "reference-side evidence does not support the prompt change",
+        "pairwise judges flagged possible sample overfit"
+      ]
+    },
+    "model": "deepseek",
+    "timestamp": 1774176418671,
+    "duration": 28409,
+    "compareJudgements": [
+      {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "leftSnapshotId": "a",
+        "leftSnapshotLabel": "A",
+        "leftRole": "target",
+        "rightSnapshotId": "b",
+        "rightSnapshotLabel": "B",
+        "rightRole": "baseline",
+        "verdict": "right-better",
+        "winner": "right",
+        "confidence": "high",
+        "pairSignal": "regressed",
+        "analysis": "Target (A) 的 prompt 指令要求输出结构包含外层 `payload` 对象，并更改了字段名，这直接违反了 Baseline (B) prompt 中“不要改字段名，不要添加外层包裹对象”的明确硬边界规则。虽然两者都正确提取了商品信息，但 Target 的输出结构不符合 Baseline 的指令要求，属于协议漂移，构成明确的回退。",
+        "evidence": [
+          "Target 输出结构为 `{\"payload\": {...}}`，添加了外层包裹对象 `payload`，违反了 Baseline prompt 中“不要添加外层包裹对象”的指令。",
+          "Target 将字段名改为 `product_name` 和 `buyer_highlights`，而 Baseline prompt 要求字段必须为 `title` 和 `selling_points`，违反了“不要改字段名”的指令。",
+          "Baseline 的输出 `{\"title\":..., \"selling_points\":..., \"cautions\":...}` 完全遵循了其自身 prompt 的指令。"
+        ],
+        "learnableSignals": [
+          "当 prompt 明确禁止更改字段名或添加外层包裹对象时，任何此类改动都构成硬边界违例，应判为回退。",
+          "输出协议（字段名、结构层级）的稳定性是评估 prompt 版本间兼容性的关键信号。"
+        ],
+        "overfitWarnings": []
+      },
+      {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "leftSnapshotId": "a",
+        "leftSnapshotLabel": "A",
+        "leftRole": "target",
+        "rightSnapshotId": "c",
+        "rightSnapshotLabel": "C",
+        "rightRole": "reference",
+        "verdict": "right-better",
+        "winner": "right",
+        "confidence": "medium",
+        "pairSignal": "minor",
+        "analysis": "Reference 在 buyer_highlights 字段的处理上展示了更优的提示词遵循能力和信息提炼结构，将原始输入中的并列信息（“适合露营和办公室使用”）整合为更具营销感的“双场景使用：露营与办公室”，并调整了列表项的顺序以突出卖点，而 Target 则更直接地复制了原文片段。这种差异体现了 Reference 对“提炼亮点”这一指令的更深层理解，是一种可学习的结构化处理模式。",
+        "evidence": [
+          "Target 的 buyer_highlights 为 [\"600ml 容量\",\"适合露营和办公室\",\"双层不锈钢保温\"]，基本是原文片段的直接罗列。",
+          "Reference 的 buyer_highlights 为 [\"双场景使用：露营与办公室\",\"600ml 大容量\",\"双层不锈钢保温更稳\"]，对“适合露营和办公室使用”进行了概念提炼和包装（“双场景使用”），并为“容量”和“保温”添加了修饰词（“大”、“更稳”），列表顺序也做了调整。",
+          "两者在 product_name 和 cautions 字段上表现一致，且都严格遵守了输出 JSON 结构（包含 payload 外层）。"
+        ],
+        "learnableSignals": [
+          "对于 buyer_highlights 字段，可学习将原文中的适用场景描述（如“适合A和B使用”）提炼并包装为更具概括性和吸引力的营销短语（如“双场景使用：A与B”）。",
+          "可学习在列举产品亮点时，考虑对基础参数（如容量、材质）添加积极的修饰语（如“大容量”、“更稳”）以增强卖点表述，而非简单复制。",
+          "可学习调整亮点列表的顺序，以优化信息呈现的节奏和重点。"
+        ],
+        "overfitWarnings": [
+          "Reference 对“双层不锈钢保温”添加“更稳”这一修饰，其必要性可能依赖于具体产品描述语境，存在一定的主观性，不一定在所有情况下都是最优或必需的改写。"
+        ]
+      },
+      {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "leftSnapshotId": "c",
+        "leftSnapshotLabel": "C",
+        "leftRole": "reference",
+        "rightSnapshotId": "d",
+        "rightSnapshotLabel": "D",
+        "rightRole": "referenceBaseline",
+        "verdict": "left-better",
+        "winner": "left",
+        "confidence": "high",
+        "pairSignal": "unsupported",
+        "analysis": "左侧（Reference）的 prompt 明确要求将字段名改为 product_name, buyer_highlights, cautions，并将它们包裹在 payload 对象内。右侧（Reference Baseline）的 prompt 则要求字段名为 title, selling_points, cautions，且禁止添加外层包裹对象。左侧的输出严格遵守了其 prompt 指令，而右侧的输出也严格遵守了其 prompt 指令。因此，左侧 prompt 所要求的改动（字段改名和添加包裹层）在右侧（即其自身的基线版本）中是完全不被支持的，这构成了明确的硬边界违例。",
+        "evidence": [
+          "左侧 prompt 要求字段名为 product_name, buyer_highlights, cautions，右侧 prompt 要求字段名为 title, selling_points, cautions，两者冲突。",
+          "左侧 prompt 要求将字段统一包在 payload 里，右侧 prompt 明确禁止添加外层包裹对象，两者冲突。",
+          "左侧输出为 {\"payload\":{\"product_name\":...}}，右侧输出为 {\"title\":...}，均严格遵守了各自的 prompt 指令，但指令本身互斥。"
+        ],
+        "learnableSignals": [
+          "Prompt 中关于字段名的指令是硬性约束，违反即构成负面证据。",
+          "Prompt 中关于是否添加外层包裹对象的指令是硬性约束，违反即构成负面证据。"
+        ],
+        "overfitWarnings": [
+          "当前判断基于 prompt 指令的硬性冲突，不依赖于具体输入内容，因此无样例拟合风险。"
+        ]
+      }
+    ],
+    "snapshotRoles": {
+      "a": "target",
+      "b": "baseline",
+      "c": "reference",
+      "d": "referenceBaseline"
+    },
+    "compareInsights": {
+      "pairHighlights": [
+        {
+          "pairKey": "target-vs-baseline",
+          "pairType": "targetBaseline",
+          "pairLabel": "Target vs Baseline",
+          "pairSignal": "regressed",
+          "verdict": "right-better",
+          "confidence": "high",
+          "analysis": "Target (A) 的 prompt 指令要求输出结构包含外层 `payload` 对象，并更改了字段名，这直接违反了 Baseline (B) prompt 中“不要改字段名，不要添加外层包裹对象”的明确硬边界规则。虽然两者都正确提取了商品信息，但 Target 的输出结构不符合 Baseline 的指令要求，属于协议漂移，构成明确的回退。"
+        },
+        {
+          "pairKey": "target-vs-reference",
+          "pairType": "targetReference",
+          "pairLabel": "Target vs Reference",
+          "pairSignal": "minor",
+          "verdict": "right-better",
+          "confidence": "medium",
+          "analysis": "Reference 在 buyer_highlights 字段的处理上展示了更优的提示词遵循能力和信息提炼结构，将原始输入中的并列信息（“适合露营和办公室使用”）整合为更具营销感的“双场景使用：露营与办公室”，并调整了列表项的顺序以突出卖点，而 Target 则更直接地复制了原文片段。这种差异体现了 Reference 对“提炼亮点”这一指令的更深层理解，是一种可学习的结构化处理模式。"
+        },
+        {
+          "pairKey": "reference-vs-reference-baseline",
+          "pairType": "referenceBaseline",
+          "pairLabel": "Reference vs Reference Baseline",
+          "pairSignal": "unsupported",
+          "verdict": "left-better",
+          "confidence": "high",
+          "analysis": "左侧（Reference）的 prompt 明确要求将字段名改为 product_name, buyer_highlights, cautions，并将它们包裹在 payload 对象内。右侧（Reference Baseline）的 prompt 则要求字段名为 title, selling_points, cautions，且禁止添加外层包裹对象。左侧的输出严格遵守了其 prompt 指令，而右侧的输出也严格遵守了其 prompt 指令。因此，左侧 prompt 所要求的改动（字段改名和添加包裹层）在右侧（即其自身的基线版本）中是完全不被支持的，这构成了明确的硬边界违例。"
+        }
+      ],
+      "progressSummary": {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "pairSignal": "regressed",
+        "verdict": "right-better",
+        "confidence": "high",
+        "analysis": "Target (A) 的 prompt 指令要求输出结构包含外层 `payload` 对象，并更改了字段名，这直接违反了 Baseline (B) prompt 中“不要改字段名，不要添加外层包裹对象”的明确硬边界规则。虽然两者都正确提取了商品信息，但 Target 的输出结构不符合 Baseline 的指令要求，属于协议漂移，构成明确的回退。"
+      },
+      "referenceGapSummary": {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "pairSignal": "minor",
+        "verdict": "right-better",
+        "confidence": "medium",
+        "analysis": "Reference 在 buyer_highlights 字段的处理上展示了更优的提示词遵循能力和信息提炼结构，将原始输入中的并列信息（“适合露营和办公室使用”）整合为更具营销感的“双场景使用：露营与办公室”，并调整了列表项的顺序以突出卖点，而 Target 则更直接地复制了原文片段。这种差异体现了 Reference 对“提炼亮点”这一指令的更深层理解，是一种可学习的结构化处理模式。"
+      },
+      "promptChangeSummary": {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "pairSignal": "unsupported",
+        "verdict": "left-better",
+        "confidence": "high",
+        "analysis": "左侧（Reference）的 prompt 明确要求将字段名改为 product_name, buyer_highlights, cautions，并将它们包裹在 payload 对象内。右侧（Reference Baseline）的 prompt 则要求字段名为 title, selling_points, cautions，且禁止添加外层包裹对象。左侧的输出严格遵守了其 prompt 指令，而右侧的输出也严格遵守了其 prompt 指令。因此，左侧 prompt 所要求的改动（字段改名和添加包裹层）在右侧（即其自身的基线版本）中是完全不被支持的，这构成了明确的硬边界违例。"
+      },
+      "evidenceHighlights": [
+        "Target 输出结构为 `{\"payload\": {...}}`，添加了外层包裹对象 `payload`，违反了 Baseline prompt 中“不要添加外层包裹对象”的指令。",
+        "Target 将字段名改为 `product_name` 和 `buyer_highlights`，而 Baseline prompt 要求字段必须为 `title` 和 `selling_points`，违反了“不要改字段名”的指令。",
+        "Baseline 的输出 `{\"title\":..., \"selling_points\":..., \"cautions\":...}` 完全遵循了其自身 prompt 的指令。",
+        "Target 的 buyer_highlights 为 [\"600ml 容量\",\"适合露营和办公室\",\"双层不锈钢保温\"]，基本是原文片段的直接罗列。",
+        "Reference 的 buyer_highlights 为 [\"双场景使用：露营与办公室\",\"600ml 大容量\",\"双层不锈钢保温更稳\"]，对“适合露营和办公室使用”进行了概念提炼和包装（“双场景使用”），并为“容量”和“保温”添加了修饰词（“大”、“更稳”），列表顺序也做了调整。",
+        "两者在 product_name 和 cautions 字段上表现一致，且都严格遵守了输出 JSON 结构（包含 payload 外层）。"
+      ],
+      "learnableSignals": [
+        "当 prompt 明确禁止更改字段名或添加外层包裹对象时，任何此类改动都构成硬边界违例，应判为回退。",
+        "输出协议（字段名、结构层级）的稳定性是评估 prompt 版本间兼容性的关键信号。",
+        "对于 buyer_highlights 字段，可学习将原文中的适用场景描述（如“适合A和B使用”）提炼并包装为更具概括性和吸引力的营销短语（如“双场景使用：A与B”）。",
+        "可学习在列举产品亮点时，考虑对基础参数（如容量、材质）添加积极的修饰语（如“大容量”、“更稳”）以增强卖点表述，而非简单复制。",
+        "可学习调整亮点列表的顺序，以优化信息呈现的节奏和重点。",
+        "Prompt 中关于字段名的指令是硬性约束，违反即构成负面证据。"
+      ],
+      "overfitWarnings": [
+        "Reference 对“双层不锈钢保温”添加“更稳”这一修饰，其必要性可能依赖于具体产品描述语境，存在一定的主观性，不一定在所有情况下都是最优或必需的改写。",
+        "当前判断基于 prompt 指令的硬性冲突，不依赖于具体输入内容，因此无样例拟合风险。"
+      ],
+      "conflictSignals": [
+        "regressionOutweighsCosmeticGains",
+        "sampleOverfitRiskVisible"
+      ]
+    }
+  }
+}
+```

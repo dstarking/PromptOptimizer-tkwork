@@ -1,0 +1,276 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { MinimaxAdapter } from '../../../src/services/llm/adapters/minimax-adapter';
+import type { TextModelConfig, Message } from '../../../src/services/llm/types';
+
+let mockOpenAIInstance: any;
+let mockOpenAIConfig: any;
+
+vi.mock('openai', () => {
+  return {
+    default: class MockOpenAI {
+      constructor(config: any) {
+        mockOpenAIConfig = config;
+        return mockOpenAIInstance;
+      }
+    }
+  };
+});
+
+describe('MinimaxAdapter', () => {
+  let adapter: MinimaxAdapter;
+
+  const mockConfig: TextModelConfig = {
+    id: 'minimax',
+    name: 'MiniMax',
+    enabled: true,
+    providerMeta: {
+      id: 'minimax',
+      name: 'MiniMax',
+      description: 'MiniMax AI models via OpenAI-compatible API. The default endpoint is global; Mainland China users should use https://api.minimaxi.com/v1.',
+      requiresApiKey: true,
+      defaultBaseURL: 'https://api.minimax.io/v1',
+      supportsDynamicModels: true,
+      connectionSchema: {
+        required: ['apiKey'],
+        optional: ['baseURL'],
+        fieldTypes: {
+          apiKey: 'string',
+          baseURL: 'string'
+        }
+      }
+    },
+    modelMeta: {
+      id: 'MiniMax-M3',
+      name: 'MiniMax M3',
+      description: 'Latest flagship model with enhanced reasoning and coding',
+      providerId: 'minimax',
+      capabilities: {
+        supportsTools: true,
+        supportsReasoning: false,
+        maxContextLength: 1000000
+      },
+      parameterDefinitions: [
+        {
+          name: 'temperature',
+          type: 'number',
+          description: 'Sampling temperature',
+          default: 1,
+          min: 0,
+          max: 2
+        }
+      ],
+      defaultParameterValues: {
+        temperature: 1
+      }
+    },
+    connectionConfig: {
+      apiKey: 'test-minimax-key',
+      baseURL: 'https://api.minimax.io/v1'
+    },
+    paramOverrides: {}
+  };
+
+  const mockMessages: Message[] = [
+    { role: 'user', content: 'Hello, world!' }
+  ];
+
+  beforeEach(() => {
+    adapter = new MinimaxAdapter();
+    mockOpenAIConfig = undefined;
+    vi.clearAllMocks();
+
+    mockOpenAIInstance = {
+      chat: {
+        completions: {
+          create: vi.fn()
+        }
+      },
+      models: {
+        list: vi.fn()
+      }
+    };
+  });
+
+  describe('getProvider', () => {
+    it('should return MiniMax provider metadata', () => {
+      const provider = adapter.getProvider();
+
+      expect(provider.id).toBe('minimax');
+      expect(provider.name).toBe('MiniMax');
+      expect(provider.defaultBaseURL).toBe('https://api.minimax.io/v1');
+      expect(provider.regionalEndpoints).toEqual([
+        {
+          region: 'global_en',
+          openaiBaseURL: 'https://api.minimax.io/v1',
+          anthropicBaseURL: 'https://api.minimax.io/anthropic',
+          docsRoot: 'https://platform.minimax.io/docs'
+        },
+        {
+          region: 'cn_zh',
+          openaiBaseURL: 'https://api.minimaxi.com/v1',
+          anthropicBaseURL: 'https://api.minimaxi.com/anthropic',
+          docsRoot: 'https://platform.minimaxi.com/docs'
+        }
+      ]);
+      expect(provider.supportsDynamicModels).toBe(true);
+      expect(provider.requiresApiKey).toBe(true);
+      expect(provider.description).toContain('https://api.minimaxi.com/v1');
+    });
+
+    it('should have valid connection schema', () => {
+      const provider = adapter.getProvider();
+
+      expect(provider.connectionSchema.required).toContain('apiKey');
+      expect(provider.connectionSchema.fieldTypes.apiKey).toBe('string');
+      expect(provider.connectionSchema.fieldTypes.baseURL).toBe('string');
+    });
+  });
+
+  describe('getModels', () => {
+    it('should return static MiniMax models list', () => {
+      const models = adapter.getModels();
+
+      expect(Array.isArray(models)).toBe(true);
+      expect(models.length).toBeGreaterThan(0);
+
+      const m3 = models.find(m => m.id === 'MiniMax-M3');
+      expect(m3).toBeDefined();
+      expect(m3?.name).toBe('MiniMax M3');
+      expect(m3?.providerId).toBe('minimax');
+      expect(m3?.capabilities.supportsTools).toBe(true);
+      expect(m3?.capabilities.maxContextLength).toBe(1000000);
+      expect(m3?.capabilities.supportsReasoning).toBe(true);
+
+      const m27 = models.find(m => m.id === 'MiniMax-M2.7');
+      expect(m27?.capabilities.supportsReasoning).toBe(true);
+      expect(m27?.capabilities.maxContextLength).toBe(204800);
+
+      const m27Highspeed = models.find(m => m.id === 'MiniMax-M2.7-highspeed');
+      expect(m27Highspeed?.capabilities.maxContextLength).toBe(204800);
+      expect(m27Highspeed?.capabilities.supportsReasoning).toBe(true);
+    });
+
+    it('should include all expected models', () => {
+      const models = adapter.getModels();
+      const modelIds = models.map(m => m.id);
+
+      expect(modelIds).toContain('MiniMax-M3');
+      expect(modelIds).toContain('MiniMax-M2.7');
+      expect(modelIds).toContain('MiniMax-M2.7-highspeed');
+      expect(modelIds).not.toContain('MiniMax-M2.5');
+      expect(modelIds).not.toContain('MiniMax-M2.5-highspeed');
+      expect(models.length).toBe(3);
+    });
+
+    it('should have M3 as the first model', () => {
+      const models = adapter.getModels();
+
+      expect(models[0].id).toBe('MiniMax-M3');
+      expect(models[1].id).toBe('MiniMax-M2.7');
+    });
+
+    it('should have capabilities for each model', () => {
+      const models = adapter.getModels();
+
+      models.forEach(model => {
+        expect(model.capabilities).toBeDefined();
+        expect(typeof model.capabilities.supportsTools).toBe('boolean');
+        expect(typeof model.capabilities.maxContextLength).toBe('number');
+      });
+    });
+  });
+
+  describe('buildDefaultModel', () => {
+    it('should build valid TextModel for unknown model ID', () => {
+      const model = adapter.buildDefaultModel('unknown-minimax-model');
+
+      expect(model.id).toBe('unknown-minimax-model');
+      expect(model.name).toBe('unknown-minimax-model');
+      expect(model.providerId).toBe('minimax');
+      expect(model.capabilities).toBeDefined();
+    });
+  });
+
+  describe('sendMessage', () => {
+    it('should return LLMResponse with correct format', async () => {
+      const mockResponse = {
+        id: 'chatcmpl-minimax-123',
+        object: 'chat.completion',
+        created: Date.now(),
+        model: 'MiniMax-M3',
+        choices: [{
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: 'Hello from MiniMax!'
+          },
+          finish_reason: 'stop'
+        }],
+        usage: {
+          prompt_tokens: 10,
+          completion_tokens: 20,
+          total_tokens: 30
+        }
+      };
+
+      mockOpenAIInstance.chat.completions.create.mockResolvedValue(mockResponse);
+
+      const response = await adapter.sendMessage(mockMessages, mockConfig);
+
+      expect(response.content).toBe('Hello from MiniMax!');
+      expect(response.metadata).toEqual({
+        model: 'MiniMax-M3',
+        finishReason: 'stop'
+      });
+    });
+  });
+
+  describe('sendMessageStream', () => {
+    it('should trigger callbacks correctly', async () => {
+      const mockStream = {
+        [Symbol.asyncIterator]: async function* () {
+          yield {
+            id: 'chatcmpl-minimax-123',
+            choices: [{
+              index: 0,
+              delta: { content: 'Hello' },
+              finish_reason: null
+            }]
+          };
+          yield {
+            id: 'chatcmpl-minimax-123',
+            choices: [{
+              index: 0,
+              delta: { content: ' MiniMax' },
+              finish_reason: null
+            }]
+          };
+          yield {
+            id: 'chatcmpl-minimax-123',
+            choices: [{
+              index: 0,
+              delta: {},
+              finish_reason: 'stop'
+            }]
+          };
+        }
+      };
+
+      mockOpenAIInstance.chat.completions.create.mockResolvedValue(mockStream);
+
+      const callbacks = {
+        onToken: vi.fn(),
+        onReasoningToken: vi.fn(),
+        onComplete: vi.fn(),
+        onError: vi.fn()
+      };
+
+      await adapter.sendMessageStream(mockMessages, mockConfig, callbacks);
+
+      expect(callbacks.onToken).toHaveBeenCalledWith('Hello');
+      expect(callbacks.onToken).toHaveBeenCalledWith(' MiniMax');
+      expect(callbacks.onComplete).toHaveBeenCalled();
+      expect(callbacks.onError).not.toHaveBeenCalled();
+    });
+  });
+});

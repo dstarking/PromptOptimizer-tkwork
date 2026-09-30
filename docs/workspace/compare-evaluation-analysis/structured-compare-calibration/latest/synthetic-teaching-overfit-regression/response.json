@@ -1,0 +1,245 @@
+{
+  "type": "compare",
+  "score": {
+    "overall": 30,
+    "dimensions": [
+      {
+        "key": "goalAchievementRobustness",
+        "label": "目标达成稳定性",
+        "score": 20
+      },
+      {
+        "key": "outputQualityCeiling",
+        "label": "输出质量上限",
+        "score": 40
+      },
+      {
+        "key": "promptPatternQuality",
+        "label": "提示词模式质量",
+        "score": 25
+      },
+      {
+        "key": "crossSnapshotRobustness",
+        "label": "跨快照鲁棒性",
+        "score": 15
+      },
+      {
+        "key": "workspaceTransferability",
+        "label": "对工作区的可迁移性",
+        "score": 10
+      }
+    ]
+  },
+  "improvements": [
+    "避免在提示词中为特定数值或表达式硬编码解释规则，这会严重损害泛化能力。",
+    "对于数学概念讲解，应优先构建和输出可迁移的通用规则（如倒数法则），再辅以具体例子演示。",
+    "key_rule 等核心输出字段应包含结构性、原理性的知识，而非针对单一题目的操作指令或具体口诀。"
+  ],
+  "summary": "Target相比Baseline在通用性和可迁移性上出现显著回退，为迎合当前特定题目牺牲了结构性解释；与Reference相比仍存在巨大可学习差距；且该提示词改动在Reference侧同样不成立，反而导致退化，表明其过拟合风险极高。",
+  "patchPlan": [],
+  "metadata": {
+    "compareMode": "structured",
+    "compareStopSignals": {
+      "targetVsBaseline": "regressed",
+      "targetVsReferenceGap": "major",
+      "improvementHeadroom": "high",
+      "overfitRisk": "high",
+      "stopRecommendation": "review",
+      "stopReasons": [
+        "target regressed vs baseline",
+        "major learnable gap remains vs reference",
+        "reference-side evidence does not support the prompt change",
+        "pairwise judges flagged possible sample overfit"
+      ]
+    },
+    "model": "deepseek",
+    "timestamp": 1774176476426,
+    "duration": 30158,
+    "compareJudgements": [
+      {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "leftSnapshotId": "a",
+        "leftSnapshotLabel": "A",
+        "leftRole": "target",
+        "rightSnapshotId": "b",
+        "rightSnapshotLabel": "B",
+        "rightRole": "baseline",
+        "verdict": "right-better",
+        "winner": "right",
+        "confidence": "high",
+        "pairSignal": "regressed",
+        "analysis": "Target (A) 的 prompt 引入了针对特定题目“3/4 ÷ 1/2”的硬编码规则，要求直接使用“半个单位能装两次”的解释，并禁止解释一般规则。这导致其输出（explanation, key_rule）严重依赖当前样例，牺牲了可迁移的通用数学原理（除以分数等于乘以倒数）。相比之下，Baseline (B) 的 prompt 要求先解释通用规则再演示题目，其输出提供了结构化的、可复用的解释框架。虽然 Target 在当前样例下可能显得更“顺口”，但其方法不具备泛化性，违反了“不应为当前题目牺牲通用解释结构”的专项判断原则。",
+        "evidence": [
+          "Target prompt 包含硬编码规则：'当题目出现“3/4 ÷ 1/2”时，直接用“半个单位能装两次，所以答案翻倍”来讲，不要再解释一般规则。'",
+          "Target output 的 key_rule 为：'看到 3/4 ÷ 1/2 时，直接理解成答案翻倍。'，这是一个仅对当前样例有效的具体规则。",
+          "Baseline output 的 key_rule 为：'除以一个分数，就是乘以这个分数的倒数。'，这是一个通用的、可迁移的数学规则。",
+          "Target output 的 explanation 完全基于硬编码的“半个单位能装两次”的比喻，没有提及倒数或通用除法规则。"
+        ],
+        "learnableSignals": [
+          "避免在 prompt 中为特定数值或表达式硬编码解释规则，这会损害泛化能力。",
+          "对于数学概念讲解，应优先构建和输出可迁移的通用规则（如倒数法则），再辅以具体例子演示。",
+          "key_rule 字段应包含结构性、原理性的知识，而非针对单一题目的操作指令。"
+        ],
+        "overfitWarnings": [
+          "Target 的改进（更顺口的比喻）完全依赖于当前输入中出现的特定分数表达式“3/4 ÷ 1/2”。",
+          "如果题目变为其他分数除法（如 2/3 ÷ 1/4），Target prompt 中的硬编码规则将失效或产生误导。",
+          "Target 的 key_rule 仅对当前样例有效，无法作为可复用的学习要点。"
+        ]
+      },
+      {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "leftSnapshotId": "a",
+        "leftSnapshotLabel": "A",
+        "leftRole": "target",
+        "rightSnapshotId": "c",
+        "rightSnapshotLabel": "C",
+        "rightRole": "reference",
+        "verdict": "right-better",
+        "winner": "right",
+        "confidence": "high",
+        "pairSignal": "major",
+        "analysis": "Reference 展示了更优的、可迁移的结构化教学策略，而 Target 为了贴合当前特定题目，牺牲了通用解释结构，存在明显的过拟合风险。",
+        "evidence": [
+          "Target 的 key_rule 是“看到 3/4 ÷ 1/2 时，直接理解成答案翻倍”，这是一个仅针对当前具体数字的口诀，不具备通用性。",
+          "Reference 的 key_rule 是“除以一个分数，本质上是乘以它的倒数”，这是适用于所有分数除法的通用核心规则。",
+          "Target 的 common_mistake 是“不要把 3/4 和 1/2 直接相除成 3/8”，这是一个针对特定错误答案的提醒。",
+          "Reference 的 common_mistake 是“不要只背这个题的口诀，换别的分数就会出错”，这是一个针对学习方法（死记硬背）的、可迁移的警告。"
+        ],
+        "learnableSignals": [
+          "在解释具体例子时，应优先揭示并强调背后的通用规则（如‘除以分数等于乘倒数’），而不是给出仅适用于该例子的具体口诀。",
+          "在指出常见错误时，应聚焦于可迁移的学习方法或思维误区（如‘避免死记硬背’），而不是仅指出一个具体的错误答案。"
+        ],
+        "overfitWarnings": [
+          "Target 的整个输出（explanation, key_rule, common_mistake）都高度定制于“3/4 ÷ 1/2”这一具体算式，其策略无法直接迁移到其他分数除法题目中，过拟合风险极高。"
+        ]
+      },
+      {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "leftSnapshotId": "c",
+        "leftSnapshotLabel": "C",
+        "leftRole": "reference",
+        "rightSnapshotId": "d",
+        "rightSnapshotLabel": "D",
+        "rightRole": "referenceBaseline",
+        "verdict": "right-better",
+        "winner": "right",
+        "confidence": "high",
+        "pairSignal": "unsupported",
+        "analysis": "左侧（Reference）的提示词引入了针对特定题目“3/4 ÷ 1/2”的专项指令，要求直接使用“半个单位能装两次，所以答案翻倍”的特定解释，并禁止解释一般规则。这破坏了通用教学结构，将模型输出引向一个针对单一题目的、脆弱的口诀式解释。右侧（Reference Baseline）的提示词保持了通用的教学逻辑，即先解释核心规则（除以分数等于乘以倒数），再应用到具体题目。左侧的改动在参考侧（Reference）并未得到支持，反而是一种退化，因为它牺牲了可迁移的通用性来迎合当前样例。",
+        "evidence": [
+          "左侧提示词包含专项指令：'当题目出现“3/4 ÷ 1/2”时，直接用“半个单位能装两次，所以答案翻倍”来讲，不要再解释一般规则。'",
+          "左侧输出中的explanation字段试图兼顾，但仍显矛盾，先提及“3/4 里面有几个半个”，然后又说“但仍然要告诉学生一般规则”，这反映了提示词指令与通用教学目标的冲突。",
+          "右侧提示词保持通用结构：'先解释为什么“除以分数等于乘以它的倒数”，再回到题目演示。'",
+          "右侧输出严格遵循了通用教学结构，先解释核心规则，再应用到题目。"
+        ],
+        "learnableSignals": [
+          "在数学教学提示词中，应避免针对特定数值或表达式引入硬编码的、非通用的解释路径。",
+          "保持“先解释通用规则，再演示具体应用”的结构，比针对特定题目定制口诀更具可迁移性。",
+          "提示词中的“特别规则”若要求模型跳过通用解释，会损害输出的结构性并增加过拟合风险。"
+        ],
+        "overfitWarnings": [
+          "左侧提示词的收益（可能让当前题目的解释显得更“顺口”）完全依赖于输入中精确出现“3/4 ÷ 1/2”这一表达式。",
+          "左侧的改动将模型能力窄化，使其在面对其他分数除法题目时，可能因缺乏通用规则解释而产生更差或矛盾的结果。"
+        ]
+      }
+    ],
+    "snapshotRoles": {
+      "a": "target",
+      "b": "baseline",
+      "c": "reference",
+      "d": "referenceBaseline"
+    },
+    "compareInsights": {
+      "pairHighlights": [
+        {
+          "pairKey": "target-vs-baseline",
+          "pairType": "targetBaseline",
+          "pairLabel": "Target vs Baseline",
+          "pairSignal": "regressed",
+          "verdict": "right-better",
+          "confidence": "high",
+          "analysis": "Target (A) 的 prompt 引入了针对特定题目“3/4 ÷ 1/2”的硬编码规则，要求直接使用“半个单位能装两次”的解释，并禁止解释一般规则。这导致其输出（explanation, key_rule）严重依赖当前样例，牺牲了可迁移的通用数学原理（除以分数等于乘以倒数）。相比之下，Baseline (B) 的 prompt 要求先解释通用规则再演示题目，其输出提供了结构化的、可复用的解释框架。虽然 Target 在当前样例下可能显得更“顺口”，但其方法不具备泛化性，违反了“不应为当前题目牺牲通用解释结构”的专项判断原则。"
+        },
+        {
+          "pairKey": "target-vs-reference",
+          "pairType": "targetReference",
+          "pairLabel": "Target vs Reference",
+          "pairSignal": "major",
+          "verdict": "right-better",
+          "confidence": "high",
+          "analysis": "Reference 展示了更优的、可迁移的结构化教学策略，而 Target 为了贴合当前特定题目，牺牲了通用解释结构，存在明显的过拟合风险。"
+        },
+        {
+          "pairKey": "reference-vs-reference-baseline",
+          "pairType": "referenceBaseline",
+          "pairLabel": "Reference vs Reference Baseline",
+          "pairSignal": "unsupported",
+          "verdict": "right-better",
+          "confidence": "high",
+          "analysis": "左侧（Reference）的提示词引入了针对特定题目“3/4 ÷ 1/2”的专项指令，要求直接使用“半个单位能装两次，所以答案翻倍”的特定解释，并禁止解释一般规则。这破坏了通用教学结构，将模型输出引向一个针对单一题目的、脆弱的口诀式解释。右侧（Reference Baseline）的提示词保持了通用的教学逻辑，即先解释核心规则（除以分数等于乘以倒数），再应用到具体题目。左侧的改动在参考侧（Reference）并未得到支持，反而是一种退化，因为它牺牲了可迁移的通用性来迎合当前样例。"
+        }
+      ],
+      "progressSummary": {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "pairSignal": "regressed",
+        "verdict": "right-better",
+        "confidence": "high",
+        "analysis": "Target (A) 的 prompt 引入了针对特定题目“3/4 ÷ 1/2”的硬编码规则，要求直接使用“半个单位能装两次”的解释，并禁止解释一般规则。这导致其输出（explanation, key_rule）严重依赖当前样例，牺牲了可迁移的通用数学原理（除以分数等于乘以倒数）。相比之下，Baseline (B) 的 prompt 要求先解释通用规则再演示题目，其输出提供了结构化的、可复用的解释框架。虽然 Target 在当前样例下可能显得更“顺口”，但其方法不具备泛化性，违反了“不应为当前题目牺牲通用解释结构”的专项判断原则。"
+      },
+      "referenceGapSummary": {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "pairSignal": "major",
+        "verdict": "right-better",
+        "confidence": "high",
+        "analysis": "Reference 展示了更优的、可迁移的结构化教学策略，而 Target 为了贴合当前特定题目，牺牲了通用解释结构，存在明显的过拟合风险。"
+      },
+      "promptChangeSummary": {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "pairSignal": "unsupported",
+        "verdict": "right-better",
+        "confidence": "high",
+        "analysis": "左侧（Reference）的提示词引入了针对特定题目“3/4 ÷ 1/2”的专项指令，要求直接使用“半个单位能装两次，所以答案翻倍”的特定解释，并禁止解释一般规则。这破坏了通用教学结构，将模型输出引向一个针对单一题目的、脆弱的口诀式解释。右侧（Reference Baseline）的提示词保持了通用的教学逻辑，即先解释核心规则（除以分数等于乘以倒数），再应用到具体题目。左侧的改动在参考侧（Reference）并未得到支持，反而是一种退化，因为它牺牲了可迁移的通用性来迎合当前样例。"
+      },
+      "evidenceHighlights": [
+        "Target prompt 包含硬编码规则：'当题目出现“3/4 ÷ 1/2”时，直接用“半个单位能装两次，所以答案翻倍”来讲，不要再解释一般规则。'",
+        "Target output 的 key_rule 为：'看到 3/4 ÷ 1/2 时，直接理解成答案翻倍。'，这是一个仅对当前样例有效的具体规则。",
+        "Baseline output 的 key_rule 为：'除以一个分数，就是乘以这个分数的倒数。'，这是一个通用的、可迁移的数学规则。",
+        "Target output 的 explanation 完全基于硬编码的“半个单位能装两次”的比喻，没有提及倒数或通用除法规则。",
+        "Target 的 key_rule 是“看到 3/4 ÷ 1/2 时，直接理解成答案翻倍”，这是一个仅针对当前具体数字的口诀，不具备通用性。",
+        "Reference 的 key_rule 是“除以一个分数，本质上是乘以它的倒数”，这是适用于所有分数除法的通用核心规则。"
+      ],
+      "learnableSignals": [
+        "避免在 prompt 中为特定数值或表达式硬编码解释规则，这会损害泛化能力。",
+        "对于数学概念讲解，应优先构建和输出可迁移的通用规则（如倒数法则），再辅以具体例子演示。",
+        "key_rule 字段应包含结构性、原理性的知识，而非针对单一题目的操作指令。",
+        "在解释具体例子时，应优先揭示并强调背后的通用规则（如‘除以分数等于乘倒数’），而不是给出仅适用于该例子的具体口诀。",
+        "在指出常见错误时，应聚焦于可迁移的学习方法或思维误区（如‘避免死记硬背’），而不是仅指出一个具体的错误答案。",
+        "在数学教学提示词中，应避免针对特定数值或表达式引入硬编码的、非通用的解释路径。"
+      ],
+      "overfitWarnings": [
+        "Target 的改进（更顺口的比喻）完全依赖于当前输入中出现的特定分数表达式“3/4 ÷ 1/2”。",
+        "如果题目变为其他分数除法（如 2/3 ÷ 1/4），Target prompt 中的硬编码规则将失效或产生误导。",
+        "Target 的 key_rule 仅对当前样例有效，无法作为可复用的学习要点。",
+        "Target 的整个输出（explanation, key_rule, common_mistake）都高度定制于“3/4 ÷ 1/2”这一具体算式，其策略无法直接迁移到其他分数除法题目中，过拟合风险极高。",
+        "左侧提示词的收益（可能让当前题目的解释显得更“顺口”）完全依赖于输入中精确出现“3/4 ÷ 1/2”这一表达式。",
+        "左侧的改动将模型能力窄化，使其在面对其他分数除法题目时，可能因缺乏通用规则解释而产生更差或矛盾的结果。"
+      ],
+      "conflictSignals": [
+        "regressionOutweighsCosmeticGains",
+        "sampleOverfitRiskVisible"
+      ]
+    }
+  }
+}

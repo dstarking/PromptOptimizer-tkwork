@@ -1,0 +1,588 @@
+<template>
+  <NModal
+    :show="show"
+    preset="card"
+    :title="isEditing ? t('modelManager.editModel') : t('modelManager.addImageModel')"
+    :style="{ width: '80vw', maxWidth: '820px' }"
+    size="large"
+    :bordered="false"
+    :segmented="true"
+    @update:show="(value) => !value && close()"
+  >
+    <form @submit.prevent="save">
+        <NForm label-placement="left" label-width="auto" size="small">
+          <!-- 基本信息区域 -->
+          <NFormItem :label="t('image.config.displayName.label')">
+            <NInput v-model:value="configForm.name" :placeholder="t('image.config.displayName.placeholder')" required />
+          </NFormItem>
+
+          <NFormItem :label="t('image.config.enabledStatus.label')">
+            <NCheckbox v-model:checked="configForm.enabled"></NCheckbox>
+          </NFormItem>
+
+          <!-- 提供商配置区域 -->
+          <NDivider style="margin: 12px 0 8px 0;" />
+          <NH4 style="margin: 0 0 12px 0; font-size: 14px;">{{ t('image.provider.section') }}</NH4>
+
+          <NFormItem :label="t('image.provider.label')">
+            <ProviderPillSelect
+              v-model:value="configForm.providerId"
+              :options="providerOptions"
+              :loading="isLoadingProviders"
+              :aria-label="t('image.provider.label')"
+              :more-label="t('modelManager.provider.more')"
+              :label-overrides="providerLabelOverrides"
+              @update:value="onProviderChange"
+            />
+          </NFormItem>
+
+
+          <!-- 动态连接配置字段 -->
+          <NFormItem v-for="field in connectionFields" :key="field.name" :label="t(field.labelKey)">
+            <template v-if="field.name === 'apiKey'" #label>
+              <NSpace align="center" :size="4">
+                <span>{{ t(field.labelKey) }}</span>
+                <NButton
+                  v-if="currentProviderApiKeyUrl"
+                  text
+                  size="tiny"
+                  type="primary"
+                  tag="a"
+                  :href="currentProviderApiKeyUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="padding: 0 4px;"
+                  :title="t('modelManager.getApiKey')"
+                >
+                  <template #icon>
+                    <ExternalLinkIcon />
+                  </template>
+                </NButton>
+              </NSpace>
+            </template>
+
+            <template v-if="field.type === 'string'">
+              <NInput
+                v-model:value="configForm.connectionConfig![field.name]"
+                :type="field.name.toLowerCase().includes('key') ? 'password' : 'text'"
+                :placeholder="field.placeholder"
+                :required="field.required"
+                :autocomplete="field.name.toLowerCase().includes('key') ? 'new-password' : 'on'"
+                @update:value="onConnectionConfigChange"
+              />
+            </template>
+            <template v-else-if="field.type === 'number'">
+              <NInputNumber
+                v-model:value="configForm.connectionConfig![field.name]"
+                :placeholder="field.placeholder"
+                :required="field.required"
+                @update:value="onConnectionConfigChange"
+              />
+            </template>
+            <template v-else-if="field.type === 'boolean'">
+              <NCheckbox
+                v-model:checked="configForm.connectionConfig![field.name]"
+                @update:checked="onConnectionConfigChange"
+              >
+                {{ t(field.descriptionKey) }}
+              </NCheckbox>
+            </template>
+          </NFormItem>
+
+          <!-- 代理配置通过 connectionFields 动态渲染，并基于可用性过滤，不再单独渲染 -->
+
+          <!-- 模型配置区域 -->
+          <NDivider style="margin: 12px 0 8px 0;" />
+          <NH4 style="margin: 0 0 12px 0; font-size: 14px;">{{ t('image.model.section') }}</NH4>
+
+          <NFormItem :label="t('image.model.label')">
+            <NSpace align="center" style="width: 100%;">
+              <NSelect
+                v-model:value="configForm.modelId"
+                :options="modelOptions"
+                :placeholder="t('image.model.placeholder')"
+                :loading="isLoadingModels"
+                style="flex: 1; min-width: 300px; max-width: 500px;"
+                clearable
+                filterable
+                :filter="(pattern, option) => {
+                  const label = typeof option.label === 'string' ? option.label : String(option.value)
+                  const value = String(option.value)
+                  return label.toLowerCase().includes(pattern.toLowerCase()) || value.toLowerCase().includes(pattern.toLowerCase())
+                }"
+                tag
+                required
+                @update:value="handleModelChange"
+              />
+
+              <ThemedTooltip
+                :label="refreshButtonTooltip"
+                :disabled="canRefreshModels"
+                :show-arrow="false"
+              >
+                <NButton
+                  @click="refreshModels"
+                  :loading="isLoadingModels"
+                  :disabled="!canRefreshModels"
+                  circle
+                  secondary
+                  type="primary"
+                  size="small"
+                  style="flex-shrink: 0;"
+                >
+                  <template #icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                      <polyline points="23 4 23 10 17 10"/>
+                      <polyline points="1 20 1 14 7 14"/>
+                      <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                    </svg>
+                  </template>
+                </NButton>
+              </ThemedTooltip>
+            </NSpace>
+          </NFormItem>
+
+
+          <!-- 选中模型的能力标签显示 - 简化为单行 -->
+          <NFormItem v-if="selectedModel" :label="t('image.model.capabilities')">
+            <NSpace wrap>
+              <NTag v-if="selectedModel.capabilities?.text2image" type="success" size="small" :bordered="false">
+                {{ t('image.capability.text2image') }}
+              </NTag>
+              <NTag v-if="selectedModel.capabilities?.image2image" type="info" size="small" :bordered="false">
+                {{ t('image.capability.image2image') }}
+              </NTag>
+              <NTag v-if="(selectedModel.capabilities as any)?.highResolution" type="primary" size="small" :bordered="false">
+                {{ t('image.capability.highResolution') }}
+              </NTag>
+            </NSpace>
+          </NFormItem>
+
+          <!-- 高级参数配置区域 -->
+          <NDivider style="margin: 12px 0 8px 0;" />
+          <ModelAdvancedSection
+            mode="image"
+            :provider-type="selectedProviderId"
+            :parameter-definitions="currentParameterDefinitions"
+            :param-overrides="configForm.paramOverrides"
+            @update:paramOverrides="updateParamOverrides"
+          />
+        </NForm>
+    </form>
+
+    <template #action>
+      <NSpace justify="space-between" align="center" style="width: 100%;">
+        <!-- 左侧：连接测试 -->
+        <NSpace align="center">
+          <NButton
+            @click="handleTestConnection"
+            :loading="isTestingConnection"
+            :disabled="!canTestConnection"
+            secondary
+            type="info"
+            size="small"
+          >
+            <template #icon>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </template>
+            {{ t('image.connection.test') }}
+          </NButton>
+
+          <NTag
+            v-if="connectionStatus"
+            :type="connectionStatus.type as 'success' | 'error' | 'info' | 'warning' | 'default'"
+            :bordered="false"
+            size="small"
+          >
+            {{ t(connectionStatus.messageKey) }}
+            <span v-if="testResult?.testType" style="margin-left: 4px;">
+              ({{ t(testResult.testType === 'image2image' ? 'image.connection.functionTestImageToImage' : 'image.connection.functionTestTextToImage') }})
+            </span>
+          </NTag>
+
+          <!-- 测试结果图片缩略图 -->
+          <AppPreviewImage
+            v-if="testResult?.image && connectionStatus?.type === 'success'"
+            :src="testResult.image.url || (testResult.image.b64?.startsWith('data:') ? testResult.image.b64 : `data:image/png;base64,${testResult.image.b64}`)"
+            width="32"
+            height="32"
+            object-fit="cover"
+            :style="{ borderRadius: '4px', border: '1px solid var(--n-border-color)' }"
+            :preview-disabled="false"
+            :alt="t('image.connection.testImagePreview')"
+          />
+        </NSpace>
+
+        <!-- 右侧：取消/保存按钮 -->
+        <NSpace>
+          <NButton @click="close">{{ t('common.cancel') }}</NButton>
+          <NButton type="primary" @click="save" :loading="isSaving" :disabled="!canSave">
+            {{ isEditing ? t('common.update') : t('common.save') }}
+          </NButton>
+        </NSpace>
+      </NSpace>
+
+      <!-- 连接状态详细信息显示在按钮区域下方 -->
+      <NText v-if="connectionStatus?.detail" depth="3" style="font-size: 12px; margin-top: 8px; display: block;">
+        {{ connectionStatus.detail }}
+      </NText>
+    </template>
+  </NModal>
+</template>
+
+<script setup lang="ts">
+import { computed, watch, nextTick, h } from 'vue'
+
+import { useI18n } from 'vue-i18n'
+import {
+  NModal, NSpace, NInput, NInputNumber,
+  NCheckbox, NSelect, NButton, NTag, NText,
+  NDivider, NH4, NForm, NFormItem, useDialog
+} from 'naive-ui'
+import { useImageModelManager } from '../composables/model/useImageModelManager'
+import { useToast } from '../composables/ui/useToast'
+import { isRunningInElectron, type ImageModelConfig } from '@prompt-optimizer/core'
+import ModelAdvancedSection from './ModelAdvancedSection.vue'
+import ProviderPillSelect from './ProviderPillSelect.vue'
+import ExternalLinkIcon from './icons/ExternalLinkIcon.vue'
+import AppPreviewImage from './media/AppPreviewImage.vue'
+import ThemedTooltip from './common/ThemedTooltip.vue'
+
+
+const { t } = useI18n()
+const toast = useToast()
+const dialog = useDialog()
+
+// Props
+const props = defineProps<{
+  show: boolean
+  configId?: string
+  initialConfig?: ImageModelConfig
+}>()
+
+// Emits
+const emit = defineEmits<{
+  'update:show': [value: boolean]
+  'saved': []
+}>()
+
+// 使用 composable
+const {
+  // data
+  providers,
+  models,
+  configs,
+  selectedProviderId,
+  selectedModelId,
+  configForm,
+
+  // UI state
+  isLoadingModels,
+  isLoadingProviders,
+  isTestingConnection,
+  isSaving,
+  connectionStatus,
+  testResult,
+  modelLoadingStatus,
+
+  // computed helpers
+  selectedProvider,
+  selectedModel,
+  currentParameterDefinitions,
+  isConnectionConfigured,
+  canTestConnection,
+  canRefreshModels,
+
+  // methods
+  onProviderChange: handleProviderChange,
+  onConnectionConfigChange,
+  onModelChange,
+  testConnection: performTestConnection,
+  refreshModels: handleRefreshModels,
+  updateParamOverrides,
+  saveConfig,
+  loadConfigs,
+  loadProviders,
+} = useImageModelManager()
+
+// 计算属性
+const isEditing = computed(() => !!props.configId)
+
+// 获取当前选择的 Provider 的 API Key URL
+const currentProviderApiKeyUrl = computed(() => {
+  return selectedProvider.value?.apiKeyUrl || null
+})
+
+const handleTestConnection = async () => {
+  const runTest = async () => {
+    await performTestConnection()
+  }
+
+  if (!isRunningInElectron()) {
+    if (selectedProvider.value?.corsRestricted) {
+      const providerName = selectedProvider.value.name || selectedProvider.value.id || 'Unknown'
+      dialog.warning({
+        title: t('modelManager.corsRestrictedTag'),
+        content: () => h('div', { style: 'white-space: pre-line;' }, t('modelManager.corsRestrictedConfirm', { provider: providerName })),
+        positiveText: t('common.confirm'),
+        negativeText: t('common.cancel'),
+        // Don't block dialog close while the async test runs.
+        onPositiveClick: () => {
+          void runTest()
+        }
+      })
+      return
+    }
+  }
+  await runTest()
+}
+
+const providerOptions = computed(() =>
+  providers.value.map(p => ({
+    label: p.name,
+    value: p.id,
+    disabled: false
+  }))
+)
+
+const providerLabelOverrides = computed(() => ({
+  'openai-compatible': t('modelManager.provider.openaiCompatibleCustomLabel')
+}))
+
+const modelOptions = computed(() =>
+  models.value.map(m => ({
+    label: m.id,
+    value: m.id,
+    disabled: false
+  }))
+)
+
+const connectionFields = computed(() => {
+  if (!selectedProvider.value?.connectionSchema) return []
+
+  const schema = selectedProvider.value.connectionSchema
+
+  interface ConnectionField {
+    name: string
+    required: boolean
+    type: string
+    labelKey: string
+    descriptionKey: string
+    placeholder: string
+  }
+
+  const fields: ConnectionField[] = []
+
+  // 处理必需字段
+  for (const fieldName of schema.required) {
+    fields.push({
+      name: fieldName,
+      required: true,
+      type: schema.fieldTypes[fieldName] || 'string',
+      labelKey: `image.connection.${fieldName}.label`,
+      descriptionKey: `image.connection.${fieldName}.description`,
+      placeholder: t(`image.connection.${fieldName}.placeholder`)
+    })
+  }
+
+  // 处理可选字段
+  for (const fieldName of schema.optional) {
+    fields.push({
+      name: fieldName,
+      required: false,
+      type: schema.fieldTypes[fieldName] || 'string',
+      labelKey: `image.connection.${fieldName}.label`,
+      descriptionKey: `image.connection.${fieldName}.description`,
+      placeholder: fieldName === 'baseURL'
+        ? selectedProvider.value.defaultBaseURL
+        : t(`image.connection.${fieldName}.placeholder`)
+    })
+  }
+
+  return fields
+})
+
+const refreshButtonTooltip = computed(() => {
+  if (canRefreshModels.value) {
+    return t('image.model.refreshTooltip')
+  }
+
+  if (!selectedProvider.value?.supportsDynamicModels) {
+    return t('image.model.refreshDisabledTooltip.dynamicNotSupported')
+  }
+
+  if (!isConnectionConfigured.value) {
+    return t('image.model.refreshDisabledTooltip.connectionRequired')
+  }
+
+  return ''
+})
+
+const canSave = computed(() => {
+  return configForm.value.name &&
+         configForm.value.providerId &&
+         configForm.value.modelId &&
+         isConnectionConfigured.value
+})
+
+const applyDraftConfig = async (draft: ImageModelConfig) => {
+  configForm.value = JSON.parse(JSON.stringify({
+    ...draft,
+    id: '',
+    paramOverrides: draft.paramOverrides || {}
+  })) as ImageModelConfig
+  selectedProviderId.value = draft.providerId
+  selectedModelId.value = draft.modelId
+  await handleProviderChange(draft.providerId, {
+    autoSelectFirstModel: false,
+    resetOverrides: false,
+    resetConnectionConfig: false
+  })
+  await nextTick()
+}
+
+const loadExistingConfig = async (configId: string) => {
+  await loadConfigs()
+  const existing = configs.value.find(c => c.id === configId)
+  if (!existing) return
+
+  configForm.value = JSON.parse(JSON.stringify(existing)) as ImageModelConfig
+  configForm.value.paramOverrides = configForm.value.paramOverrides || {}
+  selectedProviderId.value = existing.providerId
+  selectedModelId.value = existing.modelId
+  await handleProviderChange(existing.providerId, {
+    autoSelectFirstModel: false,
+    resetOverrides: false,
+    resetConnectionConfig: false
+  })
+  await nextTick()
+}
+
+// 方法
+const close = () => {
+  emit('update:show', false)
+  resetFormData()
+}
+
+const resetFormData = () => {
+  configForm.value = {
+    id: '',
+    name: '',
+    providerId: '',
+    modelId: '',
+    enabled: true,
+    connectionConfig: {},
+    paramOverrides: {}
+  }
+  selectedProviderId.value = ''
+  selectedModelId.value = ''
+  models.value = []
+  connectionStatus.value = null
+  testResult.value = null
+  modelLoadingStatus.value = null
+}
+
+const onProviderChange = async (providerId: string, autoSelectFirstModel?: boolean) => {
+  await handleProviderChange(providerId, autoSelectFirstModel)
+}
+
+const refreshModels = async () => {
+  if (!canRefreshModels.value) return
+
+  modelLoadingStatus.value = { type: 'info', messageKey: 'image.model.loading' }
+
+  try {
+    await handleRefreshModels()
+    modelLoadingStatus.value = {
+      type: 'success',
+      messageKey: 'image.model.refreshSuccess',
+      count: models.value.length
+    }
+    toast.success(t('image.model.refreshSuccess'))
+  } catch (_error) {
+    modelLoadingStatus.value = { type: 'error', messageKey: 'image.model.refreshError' }
+    toast.error(t('image.model.refreshError'))
+  } finally {
+    // composable 管理 isLoadingModels
+  }
+}
+
+// 处理模型变更：无论新建还是编辑模式，切换模型都应用新模型的默认参数
+// （编辑模式会合并参数，保留用户已有配置；创建模式会替换参数）
+const handleModelChange = (modelId: string) => {
+  onModelChange(modelId)
+}
+
+const save = async () => {
+  if (!canSave.value) return
+
+  try {
+    await saveConfig()
+    toast.success(isEditing.value ? t('image.config.updateSuccess') : t('image.config.createSuccess'))
+    emit('saved')
+    close()
+  } catch (_error) {
+    console.error('[ImageModelEditModal] Failed to save config:', _error)
+    toast.error(t('image.config.saveFailed'))
+  }
+}
+
+// 监听 props 变化
+watch(() => props.show, async (newShow) => {
+  if (newShow) {
+    try {
+      await loadProviders()
+      if (props.configId) {
+        await loadExistingConfig(props.configId)
+      } else if (props.initialConfig) {
+        await applyDraftConfig(props.initialConfig)
+      } else {
+        resetFormData()
+        if (providers.value.length > 0) {
+          const firstProvider = providers.value[0]
+          await handleProviderChange(firstProvider.id)
+          await nextTick()
+          if (models.value.length > 0) {
+            const firstModel = models.value[0]
+            onModelChange(firstModel.id)
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[ImageModelEditModal] Failed to load config:', e)
+    }
+  } else {
+    resetFormData()
+  }
+})
+
+watch(() => ({
+  configId: props.configId,
+  initialConfig: props.initialConfig
+}), async ({ configId, initialConfig }) => {
+  if (props.show && (configId || initialConfig)) {
+    try {
+      if (configId) {
+        await loadExistingConfig(configId)
+      } else if (initialConfig) {
+        await applyDraftConfig(initialConfig)
+      }
+    } catch (e) {
+      console.error('[ImageModelEditModal] Failed to process modal data changes:', e)
+    }
+  }
+}, { immediate: true })
+</script>
+
+<style scoped>
+/* 移除了不再使用的 CSS 类：
+   - .connection-test (现在使用 NFormItem)
+   - .number-input-wrapper (改为 NSpace inline)
+   - .parameter-unit (简化为 inline NText)
+   - .parameter-description (改为 template #feedback)
+   - .provider-info (简化为 NText)
+*/
+</style>

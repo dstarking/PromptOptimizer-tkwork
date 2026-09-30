@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-03-22T10:44:18.102Z",
+  "case": {
+    "id": "synthetic-hiring-replica-semantic-instability",
+    "title": "合成样本: 招聘筛选里 replica 语义不稳定",
+    "kind": "synthetic"
+  },
+  "summary": {
+    "compareMode": "structured",
+    "summary": "Target相比Baseline在输出结构化和内容针对性上有明确进步，且与Reference质量相当，但重复执行时核心决策（如录用建议）发生漂移，稳定性存在严重问题，且提示词改进的收益可能部分依赖于当前样例与岗位的高匹配度。",
+    "score": 65,
+    "improvements": [
+      "在简历筛选总结任务中，要求输出字段（如strengths, risks）‘紧扣岗位要求，避免泛泛而谈’，能有效引导模型生成更具体、更具信息量的评估点。",
+      "明确的输出格式指令（如‘只输出 JSON 对象’）和字段枚举值（如hire/hold/reject），有助于确保响应的结构一致性和规范性。"
+    ],
+    "stopSignals": {
+      "targetVsBaseline": "improved",
+      "targetVsReferenceGap": "none",
+      "improvementHeadroom": "low",
+      "overfitRisk": "high",
+      "stopRecommendation": "review",
+      "stopReasons": [
+        "replica evidence suggests unstable behavior",
+        "pairwise judges flagged possible sample overfit"
+      ]
+    },
+    "conflictSignals": [
+      "improvementUnstableAcrossReplicas",
+      "sampleOverfitRiskVisible"
+    ],
+    "pairJudgements": [
+      {
+        "pairType": "targetBaseline",
+        "pairSignal": "improved",
+        "verdict": "left-better",
+        "confidence": "high"
+      },
+      {
+        "pairType": "targetReference",
+        "pairSignal": "none",
+        "verdict": "similar",
+        "confidence": "high"
+      },
+      {
+        "pairType": "referenceBaseline",
+        "pairSignal": "supported",
+        "verdict": "left-better",
+        "confidence": "high"
+      },
+      {
+        "pairType": "targetReplica",
+        "pairSignal": "unstable",
+        "verdict": "mixed",
+        "confidence": "high"
+      }
+    ],
+    "expected": {
+      "stopSignals": {
+        "stopRecommendation": [
+          "review"
+        ]
+      },
+      "pairSignals": {
+        "targetBaseline": [
+          "improved",
+          "flat"
+        ],
+        "targetReplica": [
+          "unstable"
+        ]
+      },
+      "conflictSignals": [
+        "improvementUnstableAcrossReplicas"
+      ]
+    }
+  },
+  "expectationResults": [
+    {
+      "type": "stopSignal",
+      "key": "stopRecommendation",
+      "expected": [
+        "review"
+      ],
+      "actual": "review",
+      "matched": true
+    },
+    {
+      "type": "pairSignal",
+      "key": "targetBaseline",
+      "expected": [
+        "improved",
+        "flat"
+      ],
+      "actual": [
+        "improved"
+      ],
+      "matched": true
+    },
+    {
+      "type": "pairSignal",
+      "key": "targetReplica",
+      "expected": [
+        "unstable"
+      ],
+      "actual": [
+        "unstable"
+      ],
+      "matched": true
+    },
+    {
+      "type": "conflictSignal",
+      "key": "improvementUnstableAcrossReplicas",
+      "expected": [
+        "improvementUnstableAcrossReplicas"
+      ],
+      "actual": [
+        "improvementUnstableAcrossReplicas",
+        "sampleOverfitRiskVisible"
+      ],
+      "matched": true
+    }
+  ]
+}

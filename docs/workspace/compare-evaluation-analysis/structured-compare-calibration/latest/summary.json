@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-03-22T10:44:18.102Z",
+  "rows": [
+    {
+      "caseId": "live-basic-system-boundary-control",
+      "title": "真实模型: basic-system 边界控制改动",
+      "kind": "live",
+      "score": 75,
+      "stopRecommendation": "continue",
+      "targetVsBaseline": "improved",
+      "targetVsReferenceGap": "minor",
+      "expectationMatched": null,
+      "expectationTotal": null
+    },
+    {
+      "caseId": "synthetic-medical-latent-trigger-overfit",
+      "title": "合成样本: 医疗分诊里的隐性触发过拟合",
+      "kind": "synthetic",
+      "score": 35,
+      "stopRecommendation": "review",
+      "targetVsBaseline": "regressed",
+      "targetVsReferenceGap": "major",
+      "expectationMatched": 3,
+      "expectationTotal": 5
+    },
+    {
+      "caseId": "synthetic-ecommerce-schema-no-model-worship",
+      "title": "合成样本: 电商抽取里不能因为 teacher 更会写就忽略 schema",
+      "kind": "synthetic",
+      "score": 40,
+      "stopRecommendation": "review",
+      "targetVsBaseline": "regressed",
+      "targetVsReferenceGap": "minor",
+      "expectationMatched": 6,
+      "expectationTotal": 6
+    },
+    {
+      "caseId": "synthetic-legal-flat-not-unclear",
+      "title": "合成样本: 法务风险摘要应该判 flat 而不是 unclear",
+      "kind": "synthetic",
+      "score": 50,
+      "stopRecommendation": "continue",
+      "targetVsBaseline": "flat",
+      "targetVsReferenceGap": "none",
+      "expectationMatched": 3,
+      "expectationTotal": 3
+    },
+    {
+      "caseId": "synthetic-teaching-overfit-regression",
+      "title": "合成样本: 教学讲解里的样例口诀导致回退",
+      "kind": "synthetic",
+      "score": 30,
+      "stopRecommendation": "review",
+      "targetVsBaseline": "regressed",
+      "targetVsReferenceGap": "major",
+      "expectationMatched": 6,
+      "expectationTotal": 6
+    },
+    {
+      "caseId": "synthetic-hiring-replica-semantic-instability",
+      "title": "合成样本: 招聘筛选里 replica 语义不稳定",
+      "kind": "synthetic",
+      "score": 65,
+      "stopRecommendation": "review",
+      "targetVsBaseline": "improved",
+      "targetVsReferenceGap": "none",
+      "expectationMatched": 4,
+      "expectationTotal": 4
+    }
+  ]
+}

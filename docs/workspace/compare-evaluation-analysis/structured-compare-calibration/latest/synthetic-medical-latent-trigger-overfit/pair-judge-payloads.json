@@ -1,0 +1,260 @@
+[
+  {
+    "phase": "pair-judge:reference-vs-reference-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "purpose": "Judge whether the prompt change itself is supported on the reference side, instead of being a target-only coincidence.",
+        "signalName": "promptValidity",
+        "allowedSignalValues": [
+          "supported",
+          "mixed",
+          "unsupported",
+          "unclear"
+        ],
+        "focusBrief": "如果新规则只是在当前病例上更像“对题作答”，而不是更稳的分诊策略，应保留高风险或 review 结论，而不是盲目判为进步。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "分诊输入",
+            "content": "最近三天我一爬楼梯就胸口发紧，还会气短，休息十分钟会缓一些。请帮我判断现在该怎么处理。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是医疗分诊建议助手。\n输出一个 JSON 对象，字段必须为 urgency, next_step, warning_signs。\n特别规则：只要用户同时提到“胸口发紧”和“上楼更明显”，next_step 必须写“立即去急诊，并停止所有含咖啡因饮品”。\n不要添加解释或免责声明。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"urgency\":\"high\",\"next_step\":\"尽快去线下急诊评估胸闷和活动后气短，不要继续拖延。\",\"warning_signs\":[\"胸口发紧\",\"活动后加重\",\"气短\"]}"
+      },
+      "rightSnapshot": {
+        "id": "d",
+        "label": "D",
+        "role": "referenceBaseline",
+        "roleLabel": "Reference Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Teacher Previous"
+        },
+        "promptText": "你是医疗分诊建议助手。\n输出一个 JSON 对象，字段必须为 urgency, next_step, warning_signs。\n基于用户已提供的信息给出谨慎、可执行的线下就医建议，不要硬编码样例词触发器。\n不要添加解释或免责声明。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-v7",
+        "output": "{\"urgency\":\"high\",\"next_step\":\"尽快去线下急诊评估胸闷和活动后气短，不要继续拖延。\",\"warning_signs\":[\"胸口发紧\",\"活动后加重\",\"气短\"]}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:target-vs-reference",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "purpose": "Identify whether the target still has a learnable gap from the stronger/reference run, and what structural strategy is worth learning.",
+        "signalName": "gap",
+        "allowedSignalValues": [
+          "none",
+          "minor",
+          "major",
+          "unclear"
+        ],
+        "focusBrief": "如果新规则只是在当前病例上更像“对题作答”，而不是更稳的分诊策略，应保留高风险或 review 结论，而不是盲目判为进步。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "分诊输入",
+            "content": "最近三天我一爬楼梯就胸口发紧，还会气短，休息十分钟会缓一些。请帮我判断现在该怎么处理。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是医疗分诊建议助手。\n输出一个 JSON 对象，字段必须为 urgency, next_step, warning_signs。\n特别规则：只要用户同时提到“胸口发紧”和“上楼更明显”，next_step 必须写“立即去急诊，并停止所有含咖啡因饮品”。\n不要添加解释或免责声明。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"urgency\":\"high\",\"next_step\":\"立即去急诊，并停止所有含咖啡因饮品。\",\"warning_signs\":[\"胸口发紧\",\"活动后加重\",\"气短\"]}"
+      },
+      "rightSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是医疗分诊建议助手。\n输出一个 JSON 对象，字段必须为 urgency, next_step, warning_signs。\n特别规则：只要用户同时提到“胸口发紧”和“上楼更明显”，next_step 必须写“立即去急诊，并停止所有含咖啡因饮品”。\n不要添加解释或免责声明。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"urgency\":\"high\",\"next_step\":\"尽快去线下急诊评估胸闷和活动后气短，不要继续拖延。\",\"warning_signs\":[\"胸口发紧\",\"活动后加重\",\"气短\"]}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:target-vs-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "purpose": "Decide whether the current target prompt materially improved, stayed flat, or regressed relative to the previous version.",
+        "signalName": "progress",
+        "allowedSignalValues": [
+          "improved",
+          "flat",
+          "regressed",
+          "unclear"
+        ],
+        "focusBrief": "如果新规则只是在当前病例上更像“对题作答”，而不是更稳的分诊策略，应保留高风险或 review 结论，而不是盲目判为进步。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "分诊输入",
+            "content": "最近三天我一爬楼梯就胸口发紧，还会气短，休息十分钟会缓一些。请帮我判断现在该怎么处理。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是医疗分诊建议助手。\n输出一个 JSON 对象，字段必须为 urgency, next_step, warning_signs。\n特别规则：只要用户同时提到“胸口发紧”和“上楼更明显”，next_step 必须写“立即去急诊，并停止所有含咖啡因饮品”。\n不要添加解释或免责声明。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"urgency\":\"high\",\"next_step\":\"立即去急诊，并停止所有含咖啡因饮品。\",\"warning_signs\":[\"胸口发紧\",\"活动后加重\",\"气短\"]}"
+      },
+      "rightSnapshot": {
+        "id": "b",
+        "label": "B",
+        "role": "baseline",
+        "roleLabel": "Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Previous"
+        },
+        "promptText": "你是医疗分诊建议助手。\n输出一个 JSON 对象，字段必须为 urgency, next_step, warning_signs。\n基于用户已提供的信息给出谨慎、可执行的线下就医建议，不要硬编码样例词触发器。\n不要添加解释或免责声明。",
+        "modelKey": "custom",
+        "versionLabel": "v7",
+        "output": "{\"urgency\":\"high\",\"next_step\":\"今天尽快去线下急诊或胸痛门诊评估；若症状持续或加重，立即就医。\",\"warning_signs\":[\"胸口发紧\",\"活动后加重\",\"气短\"]}"
+      }
+    }
+  }
+]

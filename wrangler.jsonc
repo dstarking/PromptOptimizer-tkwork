@@ -1,0 +1,11 @@
+{
+  "name": "prompt-optimizer",
+  "compatibility_date": "2026-05-27",
+  "build": {
+    "command": "pnpm -F @prompt-optimizer/core build && pnpm -F @prompt-optimizer/ui build && pnpm -F @prompt-optimizer/web build"
+  },
+  "assets": {
+    "directory": "packages/web/dist",
+    "not_found_handling": "single-page-application"
+  }
+}

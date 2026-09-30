@@ -1,0 +1,16 @@
+{
+  "type": "prompt-only",
+  "evaluationModelKey": "dashscope",
+  "mode": {
+    "functionMode": "basic",
+    "subMode": "system"
+  },
+  "focus": {
+    "content": "重点检查是否足够强调“不要输出思考过程”，并判断分类结构是否会让模型遗漏风险等级",
+    "source": "user",
+    "priority": "highest"
+  },
+  "target": {
+    "workspacePrompt": "你是一个专业客服质检助手。回答前先判断用户问题类型，再输出：问题归类、风险等级、建议回复。不要输出思考过程。"
+  }
+}

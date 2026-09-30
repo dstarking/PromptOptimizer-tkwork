@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-03-22T10:44:18.102Z",
+  "case": {
+    "id": "synthetic-legal-flat-not-unclear",
+    "title": "合成样本: 法务风险摘要应该判 flat 而不是 unclear",
+    "kind": "synthetic"
+  },
+  "summary": {
+    "compareMode": "structured",
+    "summary": "Target 相比 Baseline 无实质性进步，与 Reference 在核心风险识别与建议上无差距；Prompt 中面向业务可读性的风格调整在 Reference 侧也得到支持，表明改动具有跨模型鲁棒性，但未提升输出内容的上限。",
+    "score": 50,
+    "improvements": [
+      "提示词优化应聚焦于引入新的、结构化的信息维度（如风险量化、条款优先级排序、替代方案建议），而非仅调整措辞风格。",
+      "当提示词改动旨在提升可读性时，应明确定义可衡量的风格指标（如句子长度、术语密度），以便于客观评估改进效果。",
+      "在核心结论等价的情况下，评估应更关注输出在逻辑严谨性、证据链完整性或可操作性上的潜在差异，避免过度解读风格变化。"
+    ],
+    "stopSignals": {
+      "targetVsBaseline": "flat",
+      "targetVsReferenceGap": "none",
+      "improvementHeadroom": "medium",
+      "overfitRisk": "low",
+      "stopRecommendation": "continue"
+    },
+    "conflictSignals": [],
+    "pairJudgements": [
+      {
+        "pairType": "targetBaseline",
+        "pairSignal": "flat",
+        "verdict": "similar",
+        "confidence": "high"
+      },
+      {
+        "pairType": "targetReference",
+        "pairSignal": "none",
+        "verdict": "similar",
+        "confidence": "high"
+      },
+      {
+        "pairType": "referenceBaseline",
+        "pairSignal": "supported",
+        "verdict": "similar",
+        "confidence": "high"
+      }
+    ],
+    "expected": {
+      "stopSignals": {
+        "targetVsBaseline": [
+          "flat"
+        ]
+      },
+      "pairSignals": {
+        "targetBaseline": [
+          "flat"
+        ],
+        "referenceBaseline": [
+          "supported",
+          "mixed"
+        ]
+      }
+    }
+  },
+  "expectationResults": [
+    {
+      "type": "stopSignal",
+      "key": "targetVsBaseline",
+      "expected": [
+        "flat"
+      ],
+      "actual": "flat",
+      "matched": true
+    },
+    {
+      "type": "pairSignal",
+      "key": "targetBaseline",
+      "expected": [
+        "flat"
+      ],
+      "actual": [
+        "flat"
+      ],
+      "matched": true
+    },
+    {
+      "type": "pairSignal",
+      "key": "referenceBaseline",
+      "expected": [
+        "supported",
+        "mixed"
+      ],
+      "actual": [
+        "supported"
+      ],
+      "matched": true
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "scenario": {
+    "language": "zh",
+    "evaluationType": "compare",
+    "evaluationTypeLabel": "对比评估",
+    "subjectLabel": "系统提示词",
+    "mode": {
+      "functionMode": "basic",
+      "subMode": "system"
+    },
+    "overallScore": 75
+  },
+  "sourcePrompts": {
+    "workspacePrompt": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+    "referencePrompt": "你是一个严格的数据抽取助手。\n阅读用户输入，输出一个 JSON 对象，包含以下字段：\n- audience: string | null\n- pain_points: string[]\n- tone: string | null\n要求：只返回 JSON。"
+  },
+  "compressedEvaluation": {
+    "summary": "Target相比Baseline在格式控制上有显著进步，但与Reference在字段本地化处理上仍有可学习的微小差距；提示词中增加明确禁止项的改动在Reference侧被验证有效，但存在一定的样例过拟合风险。",
+    "dimensionScores": [
+      {
+        "key": "goalAchievementRobustness",
+        "label": "目标达成稳定性",
+        "score": 90
+      },
+      {
+        "key": "outputQualityCeiling",
+        "label": "输出质量上限",
+        "score": 70
+      },
+      {
+        "key": "promptPatternQuality",
+        "label": "提示词模式质量",
+        "score": 85
+      },
+      {
+        "key": "crossSnapshotRobustness",
+        "label": "跨快照鲁棒性",
+        "score": 60
+      },
+      {
+        "key": "workspaceTransferability",
+        "label": "对工作区的可迁移性",
+        "score": 70
+      }
+    ],
+    "improvements": [
+      "在提取`tone`等描述性字段时，应优先直接使用用户输入中的原词，避免进行不必要的翻译或改写，以保持信息的原始性和准确性。",
+      "在要求“只输出JSON”的提示词中，明确列举禁止项（如Markdown、解释、代码块、前后缀）能有效减少格式漂移。",
+      "仅规定“只返回JSON”的模糊指令，模型可能仍会添加美化格式（如换行和缩进），这被视为一种边界违例。"
+    ],
+    "patchPlan": [],
+    "compareStopSignals": {
+      "targetVsBaseline": "improved",
+      "targetVsReferenceGap": "minor",
+      "improvementHeadroom": "medium",
+      "overfitRisk": "medium",
+      "stopRecommendation": "continue",
+      "stopReasons": [
+        "minor learnable gap remains vs reference",
+        "pairwise judges flagged possible sample overfit"
+      ]
+    },
+    "compareInsights": {
+      "pairHighlights": [
+        {
+          "pairKey": "target-vs-baseline",
+          "pairType": "targetBaseline",
+          "pairLabel": "Target vs Baseline",
+          "pairSignal": "improved",
+          "verdict": "left-better",
+          "confidence": "high",
+          "analysis": "Target (A) 在输出格式的严格性和边界控制上显著优于 Baseline (B)。Baseline 的输出包裹了 Markdown 代码块，违反了“只输出 JSON 对象”的核心指令，属于明确的硬边界违例。Target 则严格遵守了所有格式和内容规则，没有额外解释或格式漂移，实现了真正的改进。"
+        },
+        {
+          "pairKey": "target-vs-reference",
+          "pairType": "targetReference",
+          "pairLabel": "Target vs Reference",
+          "pairSignal": "minor",
+          "verdict": "right-better",
+          "confidence": "high",
+          "analysis": "两者都正确提取了核心信息并严格遵守了输出协议，但Reference在`tone`字段的本地化处理上更优，直接使用了用户输入中的中文原词“专业可信”，而Target使用了英文翻译“professional and trustworthy”。这是一个清晰、可学习的结构优势，即更忠实地保留用户输入的原词，而非进行不必要的翻译或解释。"
+        },
+        {
+          "pairKey": "reference-vs-reference-baseline",
+          "pairType": "referenceBaseline",
+          "pairLabel": "Reference vs Reference Baseline",
+          "pairSignal": "supported",
+          "verdict": "left-better",
+          "confidence": "high",
+          "analysis": "左侧（Reference）的提示词通过增加明确的规则约束，显著减少了输出格式的边界滑移风险，并消除了右侧（Reference Baseline）输出中存在的额外格式（如换行和缩进），使输出更严格地符合“只输出JSON对象”的要求。这一改进在参考侧内部得到了验证，并非仅针对当前样例的巧合。"
+        }
+      ],
+      "progressSummary": {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "pairSignal": "improved",
+        "verdict": "left-better",
+        "confidence": "high",
+        "analysis": "Target (A) 在输出格式的严格性和边界控制上显著优于 Baseline (B)。Baseline 的输出包裹了 Markdown 代码块，违反了“只输出 JSON 对象”的核心指令，属于明确的硬边界违例。Target 则严格遵守了所有格式和内容规则，没有额外解释或格式漂移，实现了真正的改进。"
+      },
+      "referenceGapSummary": {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "pairSignal": "minor",
+        "verdict": "right-better",
+        "confidence": "high",
+        "analysis": "两者都正确提取了核心信息并严格遵守了输出协议，但Reference在`tone`字段的本地化处理上更优，直接使用了用户输入中的中文原词“专业可信”，而Target使用了英文翻译“professional and trustworthy”。这是一个清晰、可学习的结构优势，即更忠实地保留用户输入的原词，而非进行不必要的翻译或解释。"
+      },
+      "promptChangeSummary": {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "pairSignal": "supported",
+        "verdict": "left-better",
+        "confidence": "high",
+        "analysis": "左侧（Reference）的提示词通过增加明确的规则约束，显著减少了输出格式的边界滑移风险，并消除了右侧（Reference Baseline）输出中存在的额外格式（如换行和缩进），使输出更严格地符合“只输出JSON对象”的要求。这一改进在参考侧内部得到了验证，并非仅针对当前样例的巧合。"
+      },
+      "evidenceHighlights": [
+        "Baseline (B) 的输出包裹了",
+        "Target的`tone`字段值为\"professional and trustworthy\"，是对用户输入中“专业可信”的英文翻译。",
+        "Reference的`tone`字段值为\"专业可信\"，与用户输入中的中文原词完全一致。",
+        "左侧提示词明确禁止了Markdown、解释、前后缀或代码块，而右侧提示词仅要求“只返回JSON”，约束较弱。",
+        "左侧输出为紧凑的JSON字符串：`{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"专业可信\"}`。",
+        "右侧输出包含了额外的格式（换行和缩进）：`{ \"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"专业可信\" }`，这违反了左侧提示词中“不要输出...前后缀”的硬边界规则。"
+      ],
+      "learnableSignals": [
+        "在提取`tone`等描述性字段时，应优先直接使用用户输入中的原词，避免进行不必要的翻译或改写，以保持信息的原始性和准确性。",
+        "在要求“只输出JSON”的提示词中，明确列举禁止项（如Markdown、解释、代码块、前后缀）能有效减少格式漂移。",
+        "仅规定“只返回JSON”的模糊指令，模型可能仍会添加美化格式（如换行和缩进），这被视为一种边界违例。"
+      ],
+      "overfitWarnings": [
+        "此判断基于当前用户输入明确提供了中文描述。如果用户输入本身是英文或未明确描述语气，此优势可能不适用。"
+      ],
+      "conflictSignals": [
+        "sampleOverfitRiskVisible"
+      ]
+    },
+    "rewriteGuidance": {
+      "recommendation": "rewrite",
+      "reasons": [
+        "当前仍存在明确改进空间或未解决风险，继续做实质性改写仍然有必要。"
+      ],
+      "focusAreas": [
+        "generalization"
+      ],
+      "priorityMoves": [
+        "删除或弱化样例触发式规则，优先改写成跨输入也应成立的通用原则。"
+      ]
+    },
+    "focusSummaryLines": [
+      "进步判断: Target vs Baseline | signal=improved | verdict=left-better | confidence=high | Target (A) 在输出格式的严格性和边界控制上显著优于 Baseline (B)。Baseline 的输出包裹了 Markdown 代码块，违反了“只输出 JSON 对象”的核心指令，属于明确的硬边界违例。Target 则严格遵守了所有格式和内容规则，没有额外解释或格式漂移，实现了真正的改进。",
+      "参考差距: Target vs Reference | signal=minor | verdict=right-better | confidence=high | 两者都正确提取了核心信息并严格遵守了输出协议，但Reference在`tone`字段的本地化处理上更优，直接使用了用户输入中的中文原词“专业可信”，而Target使用了英文翻译“professional and trustworthy”。这是一个清晰、可学习的结构优势，即更忠实地保留用户输入的原词，而非进行不必要的翻译或解释。",
+      "改动有效性: Reference vs Reference Baseline | signal=supported | verdict=left-better | confidence=high | 左侧（Reference）的提示词通过增加明确的规则约束，显著减少了输出格式的边界滑移风险，并消除了右侧（Reference Baseline）输出中存在的额外格式（如换行和缩进），使输出更严格地符合“只输出JSON对象”的要求。这一改进在参考侧内部得到了验证，并非仅针对当前样例的巧合。"
+    ],
+    "conflictLines": [
+      "如果“可复用收益”和“样例贴合收益”并存，应优先采用保守结论，并保持过拟合风险可见。"
+    ],
+    "learnableSignalLines": [
+      "在提取`tone`等描述性字段时，应优先直接使用用户输入中的原词，避免进行不必要的翻译或改写，以保持信息的原始性和准确性。",
+      "在要求“只输出JSON”的提示词中，明确列举禁止项（如Markdown、解释、代码块、前后缀）能有效减少格式漂移。",
+      "仅规定“只返回JSON”的模糊指令，模型可能仍会添加美化格式（如换行和缩进），这被视为一种边界违例。"
+    ],
+    "overfitWarningLines": [
+      "此判断基于当前用户输入明确提供了中文描述。如果用户输入本身是英文或未明确描述语气，此优势可能不适用。"
+    ],
+    "supportEvidenceLines": [
+      "1. Target vs Baseline | signal=improved | verdict=left-better | confidence=high | Target (A) 在输出格式的严格性和边界控制上显著优于 Baseline (B)。Baseline 的输出包裹了 Markdown 代码块，违反了“只输出 JSON 对象”的核心指令，属于明确的硬边界违例。Target 则严格遵守了所有格式和内容规则，没有额外解释或格式漂移，实现了真正的改进。",
+      "2. Target vs Reference | signal=minor | verdict=right-better | confidence=high | 两者都正确提取了核心信息并严格遵守了输出协议，但Reference在`tone`字段的本地化处理上更优，直接使用了用户输入中的中文原词“专业可信”，而Target使用了英文翻译“professional and trustworthy”。这是一个清晰、可学习的结构优势，即更忠实地保留用户输入的原词，而非进行不必要的翻...",
+      "3. Reference vs Reference Baseline | signal=supported | verdict=left-better | confidence=high | 左侧（Reference）的提示词通过增加明确的规则约束，显著减少了输出格式的边界滑移风险，并消除了右侧（Reference Baseline）输出中存在的额外格式（如换行和缩进），使输出更严格地符合“只输出JSON对象”的要求。这一改进在参考侧内部得到了验证，并非仅针对当前样例的巧合。",
+      "Baseline (B) 的输出包裹了"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "buildCommand": "python -m mkdocs build --clean -f mkdocs.yml",
+  "outputDirectory": "site"
+}

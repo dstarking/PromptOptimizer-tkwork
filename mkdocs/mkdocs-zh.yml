@@ -1,0 +1,126 @@
+# 中文专版配置（不启用 i18n，直接指向 zh 目录）
+site_name: Prompt Optimizer 文档（中文）
+site_url: https://docs.always200.com
+site_description: Prompt Optimizer 中文文档与部署指南
+site_author: linshenkx
+
+docs_dir: docs/zh
+site_dir: site
+
+theme:
+  name: material
+  custom_dir: overrides
+  font: false
+  logo: assets/images/logo.png
+  favicon: assets/images/favicon.png
+  features:
+    - content.code.copy
+    - navigation.instant
+    - navigation.expand
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+
+plugins:
+  - search:
+      lang:
+        - zh
+  - mermaid2:
+      version: 10.4.0
+      arguments:
+        theme: auto
+        themeVariables:
+          fontSize: 16px
+  - glightbox
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.details
+  - attr_list
+
+extra_css:
+  - assets/stylesheets/brand-home.css
+
+# 中文站点导航（直连 zh 目录）
+nav:
+  - 首页: index.md
+  - 快速上手:
+      - 快速开始: user/quick-start.md
+      - 模型管理: basic/models.md
+      - 选择工作区: user/choose-workspace.md
+      - 测试与评估: user/testing-evaluation.md
+      - 模型选择与测试策略: user/model-testing-strategy.md
+  - 工作区指南:
+      - 系统提示词工作区: basic/system-optimization.md
+      - 用户提示词工作区: basic/user-optimization.md
+      - 变量工作区: advanced/variables.md
+      - 多消息工作区: advanced/context.md
+      - 文生图工作区: image/text2image-workspace.md
+      - 图生图工作区: image/image2image-workspace.md
+      - 多图生图工作区: image/multiimage-workspace.md
+  - 通用能力:
+      - 模板管理: basic/templates.md
+      - 历史记录: basic/history.md
+      - 收藏与导入: basic/favorites.md
+      - 提示词库: basic/prompt-garden.md
+      - 数据管理: basic/data.md
+      - 工具调用: advanced/tools.md
+  - 辅助功能:
+      - 变量智能填充: auxiliary/smart-fill.md
+      - 文生图复刻: auxiliary/replicate.md
+      - 风格学习: auxiliary/style-learn.md
+  - 部署与排障:
+      - Web版部署: deployment/web.md
+      - 桌面应用: deployment/desktop.md
+      - Chrome插件: deployment/extension.md
+      - Docker部署:
+          - 基础部署: deployment/docker-basic.md
+          - 高级配置: deployment/docker-advanced.md
+          - 故障排除: deployment/docker-troubleshooting.md
+      - MCP服务器: user/mcp-server.md
+      - 常见问题: help/common-questions.md
+      - 连接问题: help/connection-issues.md
+      - 故障排除: help/troubleshooting.md
+      - 技术支持: help/support.md
+  - 实战示例:
+      - 系统提示词工作区:
+          - 示例与最佳实践: examples/system-prompt-examples.md
+      - 用户提示词工作区:
+          - 示例与最佳实践: examples/user-prompt-examples.md
+          - 创意写作: examples/creative-writing.md
+          - 商务沟通: examples/business-communication.md
+          - 教学培训: examples/educational-training.md
+  - 开发指南:
+      - 媒体示例: guide/media.md
+
+# 仓库与编辑链接
+repo_url: https://github.com/linshenkx/prompt-optimizer
+repo_name: linshenkx/prompt-optimizer
+edit_uri: edit/main/mkdocs/docs/zh/
+
+# 页脚与构建
+strict: true
+copyright: "© 2025 Prompt Optimizer"
+
+extra:
+  website_url: https://always200.com
+  garden_url: https://garden.always200.com
+  product_name: 优化器
+  product_url: https://prompt.always200.com
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/linshenkx/prompt-optimizer
+      name: GitHub

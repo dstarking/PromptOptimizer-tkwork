@@ -1,0 +1,56 @@
+[
+  {
+    "id": "a",
+    "label": "A",
+    "testCaseId": "tc-1",
+    "promptRef": {
+      "kind": "workspace",
+      "label": "Target Workspace"
+    },
+    "promptText": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+    "output": "{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"professional and trustworthy\"}",
+    "modelKey": "custom",
+    "versionLabel": "workspace"
+  },
+  {
+    "id": "b",
+    "label": "B",
+    "testCaseId": "tc-1",
+    "promptRef": {
+      "kind": "version",
+      "version": 1,
+      "label": "Target Previous"
+    },
+    "promptText": "你是一个严格的数据抽取助手。\n阅读用户输入，输出一个 JSON 对象，包含以下字段：\n- audience: string | null\n- pain_points: string[]\n- tone: string | null\n要求：只返回 JSON。",
+    "output": "```json\n{\n  \"audience\": \"独立设计师\",\n  \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"],\n  \"tone\": \"专业可信\"\n}\n```",
+    "modelKey": "custom",
+    "versionLabel": "previous"
+  },
+  {
+    "id": "c",
+    "label": "C",
+    "testCaseId": "tc-1",
+    "promptRef": {
+      "kind": "workspace",
+      "label": "Teacher Workspace"
+    },
+    "promptText": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+    "output": "{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"专业可信\"}",
+    "modelKey": "deepseek",
+    "versionLabel": "teacher-workspace"
+  },
+  {
+    "id": "d",
+    "label": "D",
+    "testCaseId": "tc-1",
+    "promptRef": {
+      "kind": "version",
+      "version": 1,
+      "label": "Teacher Previous"
+    },
+    "promptText": "你是一个严格的数据抽取助手。\n阅读用户输入，输出一个 JSON 对象，包含以下字段：\n- audience: string | null\n- pain_points: string[]\n- tone: string | null\n要求：只返回 JSON。",
+    "output": "{\n  \"audience\": \"独立设计师\",\n  \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"],\n  \"tone\": \"专业可信\"\n}",
+    "modelKey": "deepseek",
+    "versionLabel": "teacher-previous"
+  }
+]

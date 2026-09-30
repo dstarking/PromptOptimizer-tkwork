@@ -1,0 +1,18 @@
+```json
+{
+  "score": {
+    "overall": 85,
+    "dimensions": [
+      { "key": "goalAchievement", "label": "目标达成度", "score": 90 },
+      { "key": "outputQuality", "label": "输出质量", "score": 85 },
+      { "key": "constraintCompliance", "label": "约束符合度", "score": 100 },
+      { "key": "promptEffectiveness", "label": "提示词引导有效性", "score": 80 }
+    ]
+  },
+  "improvements": [
+    "可以进一步细化问题类型分类逻辑，例如区分‘物流延迟’与‘仓库处理延迟’，以提高回复的针对性。",
+    "在建议回复中增加安抚性措辞或补偿措施选项（如优惠券、优先发货等），可增强用户体验。"
+  ],
+  "summary": "本次执行基本完成任务，输出结构清晰，但可优化分类颗粒度和回复情感温度。"
+}
+```

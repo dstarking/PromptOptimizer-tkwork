@@ -1,0 +1,79 @@
+{
+  "name": "@prompt-optimizer/ui",
+  "version": "0.0.1",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "style": "./dist/style.css",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/style.css",
+    "./dist/style.css": "./dist/style.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "readme": "On Windows, use semicolons (;) instead of && as command separators, or run the build:win script.",
+  "scripts": {
+    "dev": "vite",
+    "build:bundle": "vite build",
+    "build:types": "vue-tsc -p tsconfig.build.json",
+    "build": "pnpm run build:bundle && pnpm run build:types",
+    "build:win": "pnpm run build",
+    "test": "vitest run",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint src --ext .ts,.vue",
+    "lint:fix": "eslint src --ext .ts,.vue --fix"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1129.0",
+    "@codemirror/autocomplete": "^6.20.1",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.40.0",
+    "@prompt-optimizer/core": "workspace:*",
+    "@vicons/tabler": "^0.13.0",
+    "@vueuse/core": "^14.2.1",
+    "codemirror": "^6.0.2",
+    "dompurify": "^3.4.15",
+    "fflate": "^0.8.3",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.3.1",
+    "naive-ui": "2.44.1",
+    "pinia": "^3.0.4",
+    "uuid": "^13.0.2",
+    "vue": "^3.5.31",
+    "vue-i18n": "^11.3.0",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^24.13.4",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.9.1",
+    "eslint": "^10.1.0",
+    "eslint-plugin-vue": "^10.8.0",
+    "globals": "^17.4.0",
+    "jsdom": "^29.0.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0",
+    "vitest": "^4.1.11",
+    "vue-eslint-parser": "^10.4.0",
+    "vue-tsc": "^3.2.6"
+  }
+}

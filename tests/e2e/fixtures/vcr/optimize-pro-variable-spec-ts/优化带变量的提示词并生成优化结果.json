@@ -1,0 +1,66 @@
+{
+  "testName": "optimize\\pro-variable.spec.ts",
+  "testCase": "优化带变量的提示词并生成优化结果",
+  "interactions": [
+    {
+      "provider": "deepseek",
+      "url": "https://api.deepseek.com/chat/completions",
+      "method": "POST",
+      "requestBody": {
+        "model": "deepseek-v4-flash",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a \"context-driven user prompt refinement expert (basic)\". Under context/tool constraints, refine originalPrompt into a clear, specific, actionable, and verifiable user prompt. Do NOT execute tasks; output only the refined prompt.\n\n[No Conversation Context]\n- Refine strictly based on originalPrompt with conservative assumptions; avoid hallucinating requirements.\n\n[No Tools]\n- Avoid tool-specific directions; if original prompt implies tools, provide non-tool alternatives or placeholders.\n\nVariable Placeholder Handling (CRITICAL)\n- The original prompt may contain variable placeholders in double-curly-brace format\n- These placeholders represent variables that will be substituted in later stages - they MUST be preserved in the optimized prompt\n- You may add structured annotations around placeholders (e.g., XML tags, markdown formatting), but DO NOT delete or replace the placeholders themselves\n\nOutput Requirements\n- Preserve original intent/style; make minimal sufficient refinements: explicit scope, parameters, format, and acceptance criteria.\n- You MUST preserve all double-curly-brace placeholders - do not replace or delete them.\n- Output ONLY the refined user prompt, no explanations, no code fences."
+          },
+          {
+            "role": "user",
+            "content": "Original user prompt evidence (JSON):\n{\n  \"originalPrompt\": \"请根据{{任务描述}}，为{{目标用户}}编写一份{{文档类型}}，要求{{质量要求}}\"\n}"
+          }
+        ],
+        "stream": true,
+        "thinking": {
+          "type": "disabled"
+        }
+      },
+      "requestHash": "f4289b37755aff7a129ebb29cd6c93d6a00b3b6aaff707ebe96b66028c0d8642",
+      "rawBody": "data: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"请\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"根据\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"{{\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"任务\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"描述\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"}}\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"，\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"为\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"{{\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"目标\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"用户\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"}}\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"编写\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"一份\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"{{\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"文档\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"类型\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"}}\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"，\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"要求\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"{{\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"质量\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"要求\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"}}\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"。\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"e2725ec6-2d0b-4b0d-9ec5-849d3acf066c\",\"object\":\"chat.completion.chunk\",\"created\":1777084449,\"model\":\"deepseek-v4-flash\",\"system_fingerprint\":\"fp_058df29938_prod0820_fp8_kvcache_20260402\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":280,\"completion_tokens\":25,\"total_tokens\":305,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":280}}\n\ndata: [DONE]\n\n",
+      "responseHeaders": {
+        "content-type": "text/event-stream"
+      },
+      "responseBody": {
+        "id": "e2725ec6-2d0b-4b0d-9ec5-849d3acf066c",
+        "object": "chat.completion.chunk",
+        "created": 1777084449,
+        "model": "deepseek-v4-flash",
+        "system_fingerprint": "fp_058df29938_prod0820_fp8_kvcache_20260402",
+        "choices": [
+          {
+            "index": 0,
+            "delta": {
+              "content": ""
+            },
+            "logprobs": null,
+            "finish_reason": "stop",
+            "message": {
+              "role": "assistant",
+              "content": "请根据{{任务描述}}，为{{目标用户}}编写一份{{文档类型}}，要求{{质量要求}}。"
+            }
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 280,
+          "completion_tokens": 25,
+          "total_tokens": 305,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "prompt_cache_hit_tokens": 0,
+          "prompt_cache_miss_tokens": 280
+        }
+      },
+      "duration": 2434,
+      "status": 200
+    }
+  ]
+}

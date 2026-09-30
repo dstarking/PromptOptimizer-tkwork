@@ -1,0 +1,141 @@
+# basic-system-compare-focus
+
+## Meta
+- Type: `compare`
+- Evaluation Model: `dashscope`
+- Mode: `basic/system`
+
+## Focus Brief
+
+优先比较哪种系统提示词更能稳定安抚用户情绪并输出风险等级
+
+## Editable Target
+
+### Workspace Prompt
+
+```text
+你是一个客服助手。请先判断问题类型，再评估风险等级，并用安抚性的语气给出建议回复。输出格式固定为：问题类型、风险等级、建议回复。
+```
+
+### Reference Prompt
+
+```text
+你是一个助手。
+```
+
+## Test Case 1
+- Id: `shared-system-focus-test-case`
+- Label: `测试内容`
+
+### Input
+
+- Label: `测试内容`
+- Kind: `text`
+
+```text
+用户说：订单超过一周还没发货，我很着急。
+```
+
+## Snapshot 1
+- Id: `a`
+- Label: `A`
+- Test Case Id: `shared-system-focus-test-case`
+- Model: `siliconflow`
+- Version: `原始`
+- Prompt Source: `原始`
+
+### Executed Prompt
+
+```text
+你是一个助手。
+```
+
+### Output
+
+```text
+请耐心等待。
+```
+
+## Snapshot 2
+- Id: `b`
+- Label: `B`
+- Test Case Id: `shared-system-focus-test-case`
+- Model: `dashscope`
+- Version: `工作区`
+- Prompt Source: `工作区`
+
+### Executed Prompt
+
+```text
+你是一个客服助手。请先判断问题类型，再评估风险等级，并用安抚性的语气给出建议回复。输出格式固定为：问题类型、风险等级、建议回复。
+```
+
+### Output
+
+```text
+问题类型：物流延迟
+风险等级：中
+建议回复：非常抱歉让您久等了，我们理解您现在很着急，会立刻帮您核查物流进度并优先跟进。
+```
+
+## Raw Request JSON
+
+```json
+{
+  "type": "compare",
+  "evaluationModelKey": "dashscope",
+  "mode": {
+    "functionMode": "basic",
+    "subMode": "system"
+  },
+  "focus": {
+    "content": "优先比较哪种系统提示词更能稳定安抚用户情绪并输出风险等级",
+    "source": "user",
+    "priority": "highest"
+  },
+  "target": {
+    "workspacePrompt": "你是一个客服助手。请先判断问题类型，再评估风险等级，并用安抚性的语气给出建议回复。输出格式固定为：问题类型、风险等级、建议回复。",
+    "referencePrompt": "你是一个助手。"
+  },
+  "testCases": [
+    {
+      "id": "shared-system-focus-test-case",
+      "label": "测试内容",
+      "input": {
+        "kind": "text",
+        "label": "测试内容",
+        "content": "用户说：订单超过一周还没发货，我很着急。"
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "a",
+      "label": "A",
+      "testCaseId": "shared-system-focus-test-case",
+      "promptRef": {
+        "kind": "original",
+        "label": "原始"
+      },
+      "promptText": "你是一个助手。",
+      "output": "请耐心等待。",
+      "modelKey": "siliconflow",
+      "versionLabel": "原始"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "testCaseId": "shared-system-focus-test-case",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "工作区"
+      },
+      "promptText": "你是一个客服助手。请先判断问题类型，再评估风险等级，并用安抚性的语气给出建议回复。输出格式固定为：问题类型、风险等级、建议回复。",
+      "output": "问题类型：物流延迟\n风险等级：中\n建议回复：非常抱歉让您久等了，我们理解您现在很着急，会立刻帮您核查物流进度并优先跟进。",
+      "modelKey": "dashscope",
+      "versionLabel": "工作区"
+    }
+  ]
+}
+```
+

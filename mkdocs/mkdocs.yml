@@ -1,0 +1,234 @@
+# 站点信息
+site_name: Prompt Optimizer 文档
+site_url: https://docs.always200.com
+site_description: Prompt Optimizer 使用文档与部署指南
+site_author: linshenkx
+
+# 源与产物目录（与外层项目解耦）
+docs_dir: docs
+site_dir: site
+
+# i18n folder 结构下，zh 源文件会在 en 构建阶段被 MkDocs 视为“全局 docs 中未出现在当前 nav 的文件”。
+# 这些页面会由 mkdocs-zh.yml 单独做严格导航校验，因此这里只抑制多语言总站里的重复提示。
+not_in_nav: |
+  zh/**
+
+# 主题：Material（基础配置，i18n/版本选择后续任务补充）
+theme:
+  name: material
+  custom_dir: overrides
+  font: false
+  logo: assets/images/logo.png
+  favicon: assets/images/favicon.png
+  features:
+    - content.code.copy
+    - navigation.expand
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: 跟随系统主题
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色主题
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色主题
+
+# 插件：基础包含 search 与 i18n（多版本由 mike 驱动，无需插件）
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - mermaid2:
+      version: 10.4.0
+      arguments:
+        theme: auto
+        themeVariables:
+          fontSize: 16px
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: zh
+          name: 简体中文
+          build: true
+          default: true
+          nav:
+            - 首页: index.md
+            - 快速上手:
+                - 快速开始: user/quick-start.md
+                - 模型管理: basic/models.md
+                - 选择工作区: user/choose-workspace.md
+                - 测试与评估: user/testing-evaluation.md
+                - 模型选择与测试策略: user/model-testing-strategy.md
+            - 工作区指南:
+                - 系统提示词工作区: basic/system-optimization.md
+                - 用户提示词工作区: basic/user-optimization.md
+                - 变量工作区: advanced/variables.md
+                - 多消息工作区: advanced/context.md
+                - 文生图工作区: image/text2image-workspace.md
+                - 图生图工作区: image/image2image-workspace.md
+                - 多图生图工作区: image/multiimage-workspace.md
+            - 通用能力:
+                - 模板管理: basic/templates.md
+                - 历史记录: basic/history.md
+                - 收藏与导入: basic/favorites.md
+                - 提示词库: basic/prompt-garden.md
+                - 数据管理: basic/data.md
+                - 工具调用: advanced/tools.md
+            - 辅助功能:
+                - 变量智能填充: auxiliary/smart-fill.md
+                - 文生图复刻: auxiliary/replicate.md
+                - 风格学习: auxiliary/style-learn.md
+            - 部署与排障:
+                - Web版部署: deployment/web.md
+                - 桌面应用: deployment/desktop.md
+                - Chrome插件: deployment/extension.md
+                - Docker部署:
+                    - 基础部署: deployment/docker-basic.md
+                    - 高级配置: deployment/docker-advanced.md
+                    - 故障排除: deployment/docker-troubleshooting.md
+                - MCP服务器: user/mcp-server.md
+                - 常见问题: help/common-questions.md
+                - 连接问题: help/connection-issues.md
+                - 故障排除: help/troubleshooting.md
+                - 技术支持: help/support.md
+            - 实战示例:
+                - 系统提示词工作区:
+                    - 示例与最佳实践: examples/system-prompt-examples.md
+                - 用户提示词工作区:
+                    - 示例与最佳实践: examples/user-prompt-examples.md
+                    - 创意写作: examples/creative-writing.md
+                    - 商务沟通: examples/business-communication.md
+                    - 教学培训: examples/educational-training.md
+                - 图像提示词工作区:
+                    - 从提示词库导入并对比模型: examples/image-prompt-garden-nb151.md
+            - 开发指南:
+                - 媒体示例: guide/media.md
+        - locale: en
+          name: English
+          build: true
+          site_name: Prompt Optimizer Docs
+          site_description: Prompt Optimizer documentation and deployment guide
+          theme:
+            palette:
+              - toggle:
+                  name: Follow system theme
+              - toggle:
+                  name: Switch to light theme
+              - toggle:
+                  name: Switch to dark theme
+          nav:
+            - Home: index.md
+            - Getting Started:
+                - Quick Start: user/quick-start.md
+                - Model Management: basic/models.md
+                - Choose Workspace: user/choose-workspace.md
+                - Testing & Evaluation: user/testing-evaluation.md
+                - Model Testing Strategy: user/model-testing-strategy.md
+            - Workspace Guides:
+                - System Prompt Workspace: basic/system-optimization.md
+                - User Prompt Workspace: basic/user-optimization.md
+                - Variable Workspace: advanced/variables.md
+                - Context Workspace: advanced/context.md
+                - Text-to-Image Workspace: image/text2image-workspace.md
+                - Image-to-Image Workspace: image/image2image-workspace.md
+                - Multi-Image Workspace: image/multiimage-workspace.md
+            - General Capabilities:
+                - Template Management: basic/templates.md
+                - History Management: basic/history.md
+                - Favorites & Import: basic/favorites.md
+                - Prompt Library: basic/prompt-garden.md
+                - Data Management: basic/data.md
+                - Tool Calling: advanced/tools.md
+            - Auxiliary Features:
+                - Smart Variable Fill: auxiliary/smart-fill.md
+                - Text-to-Image Replicate: auxiliary/replicate.md
+                - Style Learning: auxiliary/style-learn.md
+            - Deployment & Support:
+                - Web Deployment: deployment/web.md
+                - Desktop App: deployment/desktop.md
+                - Chrome Extension: deployment/extension.md
+                - Docker Deployment:
+                    - Basic Deployment: deployment/docker-basic.md
+                    - Advanced Configuration: deployment/docker-advanced.md
+                    - Troubleshooting: deployment/docker-troubleshooting.md
+                - MCP Server: user/mcp-server.md
+                - Common Questions: help/common-questions.md
+                - Connection Issues: help/connection-issues.md
+                - Troubleshooting: help/troubleshooting.md
+                - Technical Support: help/support.md
+            - Use Cases:
+                - System Prompt Workspace:
+                    - Examples & Best Practices: examples/system-prompt-examples.md
+                - User Prompt Workspace:
+                    - Examples & Best Practices: examples/user-prompt-examples.md
+                    - Creative Writing: examples/creative-writing.md
+                    - Business Communication: examples/business-communication.md
+                    - Educational Training: examples/educational-training.md
+                - Image Prompt Workspace:
+                    - Import from Prompt Library and Compare Models: examples/image-prompt-garden-nb151.md
+            - Developer Guide:
+                - Media Examples: guide/media.md
+  # 多版本：由 mike 管理（无需在此启用插件）
+
+# 额外脚本：Mermaid（无需插件，直接加载 JS 即可）
+# 若中文分词需要增强，可按需引入 lunr-languages（本地文件或 CDN）
+# extra_javascript:
+#   - assets/javascripts/lunr.zh.js
+
+# Material 与 mike 集成：启用版本选择器
+extra:
+  alternate:
+    - name: 简体中文
+      link: /
+      lang: zh
+    - name: English  
+      link: /en/
+      lang: en
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/linshenkx/prompt-optimizer
+      name: GitHub
+  website_url: https://always200.com
+  garden_url: https://garden.always200.com
+  product_name: Optimizer
+  product_url: https://prompt.always200.com
+
+# Markdown 扩展
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.details
+  - attr_list
+
+extra_css:
+  - assets/stylesheets/brand-home.css?v=20260322-2
+
+# 导航配置已移至 i18n 插件内，为每种语言提供本地化导航
+
+# 仓库与编辑链接
+repo_url: https://github.com/linshenkx/prompt-optimizer
+repo_name: linshenkx/prompt-optimizer
+edit_uri: edit/main/mkdocs/docs/
+
+# 严格构建：将链接/引用问题视为错误
+strict: true
+
+# 版权信息（页脚显示）
+copyright: "© 2025 Prompt Optimizer"

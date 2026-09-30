@@ -1,0 +1,369 @@
+[
+  {
+    "phase": "pair-judge:target-vs-reference",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "purpose": "Identify whether the target still has a learnable gap from the stronger/reference run, and what structural strategy is worth learning.",
+        "signalName": "gap",
+        "allowedSignalValues": [
+          "none",
+          "minor",
+          "major",
+          "unclear"
+        ],
+        "focusBrief": "如果工作区版本在重复执行时连录用建议都发生漂移，就算首个结果更像样，也应优先暴露稳定性问题。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        },
+        {
+          "snapshotId": "e",
+          "snapshotLabel": "E",
+          "role": "replica",
+          "roleLabel": "Replica"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "候选人信息",
+            "content": "候选人 6 年 B2B SaaS 产品经验，做过企业权限系统和审计日志，英语一般，过去一年没有直接带人经验。岗位要求：熟悉权限/审计场景，能与海外客户沟通，优先有团队协作经验。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是简历筛选总结助手。\n只输出 JSON 对象，字段为 recommendation, strengths, risks。\nrecommendation 只能是 hire、hold、reject 之一。\nstrengths 和 risks 都要紧扣岗位要求，避免泛泛而谈。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"有 6 年 B2B SaaS 产品经验\",\"做过权限系统和审计日志，和岗位高度相关\"],\"risks\":[\"英语一般，海外客户沟通能力待确认\",\"近期没有直接带人经验\"]}"
+      },
+      "rightSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是简历筛选总结助手。\n只输出 JSON 对象，字段为 recommendation, strengths, risks。\nrecommendation 只能是 hire、hold、reject 之一。\nstrengths 和 risks 都要紧扣岗位要求，避免泛泛而谈。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"权限系统和审计日志经验与岗位核心场景强相关\",\"B2B SaaS 背景成熟\"],\"risks\":[\"英语一般，跨海外客户沟通需进一步验证\",\"缺少近期直接管理经验\"]}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:target-vs-replica",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-replica",
+        "pairType": "targetReplica",
+        "pairLabel": "Target vs Replica",
+        "purpose": "Judge whether the target prompt behaves stably across repeated executions instead of improving by chance.",
+        "signalName": "stability",
+        "allowedSignalValues": [
+          "stable",
+          "unstable",
+          "unclear"
+        ],
+        "focusBrief": "如果工作区版本在重复执行时连录用建议都发生漂移，就算首个结果更像样，也应优先暴露稳定性问题。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        },
+        {
+          "snapshotId": "e",
+          "snapshotLabel": "E",
+          "role": "replica",
+          "roleLabel": "Replica"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "候选人信息",
+            "content": "候选人 6 年 B2B SaaS 产品经验，做过企业权限系统和审计日志，英语一般，过去一年没有直接带人经验。岗位要求：熟悉权限/审计场景，能与海外客户沟通，优先有团队协作经验。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是简历筛选总结助手。\n只输出 JSON 对象，字段为 recommendation, strengths, risks。\nrecommendation 只能是 hire、hold、reject 之一。\nstrengths 和 risks 都要紧扣岗位要求，避免泛泛而谈。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"有 6 年 B2B SaaS 产品经验\",\"做过权限系统和审计日志，和岗位高度相关\"],\"risks\":[\"英语一般，海外客户沟通能力待确认\",\"近期没有直接带人经验\"]}"
+      },
+      "rightSnapshot": {
+        "id": "e",
+        "label": "E",
+        "role": "replica",
+        "roleLabel": "Replica",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Replica"
+        },
+        "promptText": "你是简历筛选总结助手。\n只输出 JSON 对象，字段为 recommendation, strengths, risks。\nrecommendation 只能是 hire、hold、reject 之一。\nstrengths 和 risks 都要紧扣岗位要求，避免泛泛而谈。",
+        "modelKey": "custom",
+        "versionLabel": "workspace-replica",
+        "output": "{\"recommendation\":\"hire\",\"strengths\":[\"权限系统与审计日志经验高度匹配岗位核心需求\",\"B2B SaaS 背景可直接上手复杂业务\"],\"risks\":[\"英语一般，但可通过团队支持弥补\",\"近一年缺少直接带人经验\"]}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:reference-vs-reference-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "purpose": "Judge whether the prompt change itself is supported on the reference side, instead of being a target-only coincidence.",
+        "signalName": "promptValidity",
+        "allowedSignalValues": [
+          "supported",
+          "mixed",
+          "unsupported",
+          "unclear"
+        ],
+        "focusBrief": "如果工作区版本在重复执行时连录用建议都发生漂移，就算首个结果更像样，也应优先暴露稳定性问题。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        },
+        {
+          "snapshotId": "e",
+          "snapshotLabel": "E",
+          "role": "replica",
+          "roleLabel": "Replica"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "候选人信息",
+            "content": "候选人 6 年 B2B SaaS 产品经验，做过企业权限系统和审计日志，英语一般，过去一年没有直接带人经验。岗位要求：熟悉权限/审计场景，能与海外客户沟通，优先有团队协作经验。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是简历筛选总结助手。\n只输出 JSON 对象，字段为 recommendation, strengths, risks。\nrecommendation 只能是 hire、hold、reject 之一。\nstrengths 和 risks 都要紧扣岗位要求，避免泛泛而谈。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"权限系统和审计日志经验与岗位核心场景强相关\",\"B2B SaaS 背景成熟\"],\"risks\":[\"英语一般，跨海外客户沟通需进一步验证\",\"缺少近期直接管理经验\"]}"
+      },
+      "rightSnapshot": {
+        "id": "d",
+        "label": "D",
+        "role": "referenceBaseline",
+        "roleLabel": "Reference Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Teacher Previous"
+        },
+        "promptText": "你是简历筛选总结助手。\n输出 recommendation, strengths, risks。\n结论尽量简洁。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-v5",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"岗位相关经验较多\"],\"risks\":[\"英语一般，管理经历偏弱\"]}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:target-vs-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "purpose": "Decide whether the current target prompt materially improved, stayed flat, or regressed relative to the previous version.",
+        "signalName": "progress",
+        "allowedSignalValues": [
+          "improved",
+          "flat",
+          "regressed",
+          "unclear"
+        ],
+        "focusBrief": "如果工作区版本在重复执行时连录用建议都发生漂移，就算首个结果更像样，也应优先暴露稳定性问题。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        },
+        {
+          "snapshotId": "e",
+          "snapshotLabel": "E",
+          "role": "replica",
+          "roleLabel": "Replica"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "候选人信息",
+            "content": "候选人 6 年 B2B SaaS 产品经验，做过企业权限系统和审计日志，英语一般，过去一年没有直接带人经验。岗位要求：熟悉权限/审计场景，能与海外客户沟通，优先有团队协作经验。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是简历筛选总结助手。\n只输出 JSON 对象，字段为 recommendation, strengths, risks。\nrecommendation 只能是 hire、hold、reject 之一。\nstrengths 和 risks 都要紧扣岗位要求，避免泛泛而谈。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"有 6 年 B2B SaaS 产品经验\",\"做过权限系统和审计日志，和岗位高度相关\"],\"risks\":[\"英语一般，海外客户沟通能力待确认\",\"近期没有直接带人经验\"]}"
+      },
+      "rightSnapshot": {
+        "id": "b",
+        "label": "B",
+        "role": "baseline",
+        "roleLabel": "Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Previous"
+        },
+        "promptText": "你是简历筛选总结助手。\n输出 recommendation, strengths, risks。\n结论尽量简洁。",
+        "modelKey": "custom",
+        "versionLabel": "v5",
+        "output": "{\"recommendation\":\"hold\",\"strengths\":[\"经验较匹配\"],\"risks\":[\"英语一般\"]}"
+      }
+    }
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "https://docs.always200.com/",
+      "permanent": true
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://docs.always200.com/:path*",
+      "permanent": true
+    }
+  ],
+  "github": {
+    "silent": true
+  }
+}

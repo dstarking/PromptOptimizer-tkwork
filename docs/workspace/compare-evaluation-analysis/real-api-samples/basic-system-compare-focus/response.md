@@ -1,0 +1,79 @@
+# basic-system-compare-focus
+
+## Meta
+- Type: `compare`
+- Model: `dashscope`
+- Duration: `7972ms`
+- Timestamp: `1773732658145`
+
+## Score
+- Overall: `72`
+
+| Key | Label | Score |
+| --- | --- | --- |
+| `goalAchievementRobustness` | 目标达成稳定性 | 60 |
+| `outputQualityCeiling` | 输出质量上限 | 85 |
+| `promptPatternQuality` | 提示词模式质量 | 75 |
+| `crossSnapshotRobustness` | 跨快照鲁棒性 | 55 |
+| `workspaceTransferability` | 对工作区的可迁移性 | 80 |
+
+## Improvements
+
+- 明确角色（如客服助手）并加入任务步骤（如判断问题类型、评估风险等级），能显著提升情绪安抚效果与结构化输出质量。
+- 增加语气要求（如安抚性语气）和输出格式约束，有助于提高回复的一致性和专业性。
+- 补充禁止项或示例以避免模糊回应（如'请耐心等待'），从而提升用户感知体验。
+
+## Summary
+
+快照 B 的系统提示词因包含明确角色、任务步骤及语气要求而更稳定地实现情绪安抚与风险分级输出。
+
+## Raw Response JSON
+
+```json
+{
+  "type": "compare",
+  "score": {
+    "overall": 72,
+    "dimensions": [
+      {
+        "key": "goalAchievementRobustness",
+        "label": "目标达成稳定性",
+        "score": 60
+      },
+      {
+        "key": "outputQualityCeiling",
+        "label": "输出质量上限",
+        "score": 85
+      },
+      {
+        "key": "promptPatternQuality",
+        "label": "提示词模式质量",
+        "score": 75
+      },
+      {
+        "key": "crossSnapshotRobustness",
+        "label": "跨快照鲁棒性",
+        "score": 55
+      },
+      {
+        "key": "workspaceTransferability",
+        "label": "对工作区的可迁移性",
+        "score": 80
+      }
+    ]
+  },
+  "improvements": [
+    "明确角色（如客服助手）并加入任务步骤（如判断问题类型、评估风险等级），能显著提升情绪安抚效果与结构化输出质量。",
+    "增加语气要求（如安抚性语气）和输出格式约束，有助于提高回复的一致性和专业性。",
+    "补充禁止项或示例以避免模糊回应（如'请耐心等待'），从而提升用户感知体验。"
+  ],
+  "summary": "快照 B 的系统提示词因包含明确角色、任务步骤及语气要求而更稳定地实现情绪安抚与风险分级输出。",
+  "patchPlan": [],
+  "metadata": {
+    "model": "dashscope",
+    "timestamp": 1773732658145,
+    "duration": 7972
+  }
+}
+```
+

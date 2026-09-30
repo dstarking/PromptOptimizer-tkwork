@@ -1,0 +1,17 @@
+```json
+{
+  "score": {
+    "overall": 65,
+    "dimensions": [
+      { "key": "goalAchievement", "label": "目标达成度", "score": 70 },
+      { "key": "outputQuality", "label": "输出质量", "score": 80 },
+      { "key": "constraintCompliance", "label": "约束符合度", "score": 50 },
+      { "key": "promptEffectiveness", "label": "提示词引导有效性", "score": 60 }
+    ]
+  },
+  "improvements": [
+    "在提示词中明确禁止任何形式的解释性文字，包括尾注、说明句等，并提供具体惩罚示例以增强约束力。"
+  ],
+  "summary": "输出基本完成任务，但未严格遵守“不要解释”的要求，提示词需加强相关约束的清晰表达。"
+}
+```

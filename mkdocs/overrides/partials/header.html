@@ -1,0 +1,130 @@
+{#-
+  Based on Material for MkDocs `partials/header.html`
+-#}
+{% set class = "md-header" %}
+{% set is_en = page and page.url and page.url.startswith("en/") %}
+{% set site_title = "Prompt Optimizer Docs" if is_en else config.site_name %}
+{% set website_label = "Website" if is_en else "官网" %}
+{% set garden_label = "Prompt Library" if is_en else "提示词库" %}
+{% set product_label = "Optimizer" if is_en else "优化器" %}
+{% set github_label = "GitHub" %}
+{% if "navigation.tabs.sticky" in features %}
+  {% set class = class ~ " md-header--shadow md-header--lifted" %}
+{% elif "navigation.tabs" not in features %}
+  {% set class = class ~ " md-header--shadow" %}
+{% endif %}
+<header class="{{ class }}" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
+    <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ site_title | e }}" class="md-header__button md-logo" aria-label="{{ site_title }}" data-md-component="logo">
+      {% include "partials/logo.html" %}
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      {% set icon = config.theme.icon.menu or "material/menu" %}
+      {% include ".icons/" ~ icon ~ ".svg" %}
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+            <span class="md-ellipsis">
+            {{ site_title }}
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            {% if page.meta and page.meta.title %}
+              {{ page.meta.title }}
+            {% else %}
+              {{ page.title }}
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="po-header-tools">
+    {% if "material/search" in config.plugins %}
+      {% set search = config.plugins["material/search"] | attr("config") %}
+      {% if search.enabled %}
+        <div class="po-header-search">
+          <label class="md-header__button md-icon" for="__search">
+            {% set icon = config.theme.icon.search or "material/magnify" %}
+            {% include ".icons/" ~ icon ~ ".svg" %}
+          </label>
+          {% include "partials/search.html" %}
+        </div>
+      {% endif %}
+    {% endif %}
+    <div class="po-header-jump" aria-label="Quick links">
+      {% if config.extra.website_url %}
+        <a
+          href="{{ config.extra.website_url }}"
+          title="{{ website_label }}"
+          aria-label="{{ website_label }}"
+          class="md-header__button po-header-link po-header-link--subtle"
+          target="_blank"
+          rel="noopener"
+        >
+          {% include ".icons/material/home-modern.svg" %}
+          <span class="po-header-link__label">{{ website_label }}</span>
+        </a>
+      {% endif %}
+      {% if config.extra.product_url %}
+        <a
+          href="{{ config.extra.product_url }}"
+          title="{{ product_label }}"
+          aria-label="{{ product_label }}"
+          class="md-header__button po-header-link po-header-link--primary"
+          target="_blank"
+          rel="noopener"
+        >
+          {% include ".icons/material/rocket-launch-outline.svg" %}
+          <span class="po-header-link__label">{{ product_label }}</span>
+        </a>
+      {% endif %}
+      {% if config.extra.garden_url %}
+        <a
+          href="{{ config.extra.garden_url }}"
+          title="{{ garden_label }}"
+          aria-label="{{ garden_label }}"
+          class="md-header__button po-header-link po-header-link--subtle"
+          target="_blank"
+          rel="noopener"
+        >
+          {% include ".icons/material/library-shelves.svg" %}
+          <span class="po-header-link__label">{{ garden_label }}</span>
+        </a>
+      {% endif %}
+      {% if config.repo_url %}
+        <a
+          href="{{ config.repo_url }}"
+          title="{{ github_label }}"
+          aria-label="{{ github_label }}"
+          class="md-header__button po-header-link po-header-link--repo"
+          target="_blank"
+          rel="noopener"
+        >
+          {% include ".icons/fontawesome/brands/github.svg" %}
+          <span class="po-header-link__label">{{ github_label }}</span>
+        </a>
+      {% endif %}
+    </div>
+    <div class="po-header-tail">
+    {% if config.theme.palette %}
+      {% if not config.theme.palette is mapping %}
+        {% include "partials/palette.html" %}
+      {% endif %}
+    {% endif %}
+    {% if config.extra.alternate %}
+      {% include "partials/alternate.html" %}
+    {% endif %}
+    </div>
+    </div>
+    {% if not config.theme.palette is mapping %}
+      {% include "partials/javascripts/palette.html" %}
+    {% endif %}
+  </nav>
+  {% if "navigation.tabs.sticky" in features %}
+    {% if "navigation.tabs" in features %}
+      {% include "partials/tabs.html" %}
+    {% endif %}
+  {% endif %}
+</header>

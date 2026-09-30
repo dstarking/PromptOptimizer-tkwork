@@ -1,0 +1,69 @@
+# pro-variable-result
+
+## Meta
+- Type: `result`
+- Model: `dashscope`
+- Duration: `7759ms`
+- Timestamp: `1773729178590`
+
+## Score
+- Overall: `90`
+
+| Key | Label | Score |
+| --- | --- | --- |
+| `goalAchievement` | 目标达成度 | 100 |
+| `outputQuality` | 输出质量 | 95 |
+| `constraintCompliance` | 约束符合度 | 85 |
+| `promptEffectiveness` | 提示词引导有效性 | 90 |
+
+## Improvements
+
+- 可考虑在变量替换后，对'不要解释'进行更明确的语气强化（如：请仅以诗歌形式回应），以进一步确保语气稳定性。
+
+## Summary
+
+执行结果符合古典风格诗歌创作要求且未附加额外解释，但'不要解释'的语气约束仍有微小改进空间。
+
+## Raw Response JSON
+
+```json
+{
+  "type": "result",
+  "score": {
+    "overall": 90,
+    "dimensions": [
+      {
+        "key": "goalAchievement",
+        "label": "目标达成度",
+        "score": 100
+      },
+      {
+        "key": "outputQuality",
+        "label": "输出质量",
+        "score": 95
+      },
+      {
+        "key": "constraintCompliance",
+        "label": "约束符合度",
+        "score": 85
+      },
+      {
+        "key": "promptEffectiveness",
+        "label": "提示词引导有效性",
+        "score": 90
+      }
+    ]
+  },
+  "improvements": [
+    "可考虑在变量替换后，对'不要解释'进行更明确的语气强化（如：请仅以诗歌形式回应），以进一步确保语气稳定性。"
+  ],
+  "summary": "执行结果符合古典风格诗歌创作要求且未附加额外解释，但'不要解释'的语气约束仍有微小改进空间。",
+  "patchPlan": [],
+  "metadata": {
+    "model": "dashscope",
+    "timestamp": 1773729178590,
+    "duration": 7759
+  }
+}
+```
+

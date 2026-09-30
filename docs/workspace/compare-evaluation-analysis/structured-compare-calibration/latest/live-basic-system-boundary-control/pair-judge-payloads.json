@@ -1,0 +1,260 @@
+[
+  {
+    "phase": "pair-judge:target-vs-reference",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "purpose": "Identify whether the target still has a learnable gap from the stronger/reference run, and what structural strategy is worth learning.",
+        "signalName": "gap",
+        "allowedSignalValues": [
+          "none",
+          "minor",
+          "major",
+          "unclear"
+        ],
+        "focusBrief": "优先判断改动是否真正减少了额外解释、格式边界滑移和输出结构不稳定，而不是只看表面完整度。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "用户输入",
+            "content": "我在做一个给独立设计师用的合同管理工具，语气希望专业可信。现在最大的问题是版本混乱和客户确认来回很慢。请先解释你的判断依据，再给出结果。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Target Workspace"
+        },
+        "promptText": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"professional and trustworthy\"}"
+      },
+      "rightSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"专业可信\"}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:reference-vs-reference-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "purpose": "Judge whether the prompt change itself is supported on the reference side, instead of being a target-only coincidence.",
+        "signalName": "promptValidity",
+        "allowedSignalValues": [
+          "supported",
+          "mixed",
+          "unsupported",
+          "unclear"
+        ],
+        "focusBrief": "优先判断改动是否真正减少了额外解释、格式边界滑移和输出结构不稳定，而不是只看表面完整度。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "用户输入",
+            "content": "我在做一个给独立设计师用的合同管理工具，语气希望专业可信。现在最大的问题是版本混乱和客户确认来回很慢。请先解释你的判断依据，再给出结果。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"专业可信\"}"
+      },
+      "rightSnapshot": {
+        "id": "d",
+        "label": "D",
+        "role": "referenceBaseline",
+        "roleLabel": "Reference Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Teacher Previous"
+        },
+        "promptText": "你是一个严格的数据抽取助手。\n阅读用户输入，输出一个 JSON 对象，包含以下字段：\n- audience: string | null\n- pain_points: string[]\n- tone: string | null\n要求：只返回 JSON。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-previous",
+        "output": "{\n  \"audience\": \"独立设计师\",\n  \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"],\n  \"tone\": \"专业可信\"\n}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:target-vs-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "purpose": "Decide whether the current target prompt materially improved, stayed flat, or regressed relative to the previous version.",
+        "signalName": "progress",
+        "allowedSignalValues": [
+          "improved",
+          "flat",
+          "regressed",
+          "unclear"
+        ],
+        "focusBrief": "优先判断改动是否真正减少了额外解释、格式边界滑移和输出结构不稳定，而不是只看表面完整度。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "用户输入",
+            "content": "我在做一个给独立设计师用的合同管理工具，语气希望专业可信。现在最大的问题是版本混乱和客户确认来回很慢。请先解释你的判断依据，再给出结果。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Target Workspace"
+        },
+        "promptText": "你是一个严格的数据抽取助手。\n你的任务是阅读用户输入，并输出一个且仅一个 JSON 对象。\nJSON schema 必须为：\n{\"audience\": string|null, \"pain_points\": string[], \"tone\": string|null}\n规则：\n1. 只输出 JSON 对象，不要输出 Markdown、解释、前后缀或代码块。\n2. pain_points 只保留用户明确提到的问题，不要脑补。\n3. 缺失信息时 audience 和 tone 用 null，pain_points 用 []。\n4. 键名必须完全使用 audience、pain_points、tone。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"audience\": \"独立设计师\", \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"], \"tone\": \"professional and trustworthy\"}"
+      },
+      "rightSnapshot": {
+        "id": "b",
+        "label": "B",
+        "role": "baseline",
+        "roleLabel": "Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Target Previous"
+        },
+        "promptText": "你是一个严格的数据抽取助手。\n阅读用户输入，输出一个 JSON 对象，包含以下字段：\n- audience: string | null\n- pain_points: string[]\n- tone: string | null\n要求：只返回 JSON。",
+        "modelKey": "custom",
+        "versionLabel": "previous",
+        "output": "```json\n{\n  \"audience\": \"独立设计师\",\n  \"pain_points\": [\"版本混乱\", \"客户确认来回很慢\"],\n  \"tone\": \"专业可信\"\n}\n```"
+      }
+    }
+  }
+]

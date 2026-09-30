@@ -1,0 +1,207 @@
+{
+  "type": "compare",
+  "score": {
+    "overall": 50,
+    "dimensions": [
+      {
+        "key": "goalAchievementRobustness",
+        "label": "目标达成稳定性",
+        "score": 100
+      },
+      {
+        "key": "outputQualityCeiling",
+        "label": "输出质量上限",
+        "score": 50
+      },
+      {
+        "key": "promptPatternQuality",
+        "label": "提示词模式质量",
+        "score": 60
+      },
+      {
+        "key": "crossSnapshotRobustness",
+        "label": "跨快照鲁棒性",
+        "score": 100
+      },
+      {
+        "key": "workspaceTransferability",
+        "label": "对工作区的可迁移性",
+        "score": 60
+      }
+    ]
+  },
+  "improvements": [
+    "提示词优化应聚焦于引入新的、结构化的信息维度（如风险量化、条款优先级排序、替代方案建议），而非仅调整措辞风格。",
+    "当提示词改动旨在提升可读性时，应明确定义可衡量的风格指标（如句子长度、术语密度），以便于客观评估改进效果。",
+    "在核心结论等价的情况下，评估应更关注输出在逻辑严谨性、证据链完整性或可操作性上的潜在差异，避免过度解读风格变化。"
+  ],
+  "summary": "Target 相比 Baseline 无实质性进步，与 Reference 在核心风险识别与建议上无差距；Prompt 中面向业务可读性的风格调整在 Reference 侧也得到支持，表明改动具有跨模型鲁棒性，但未提升输出内容的上限。",
+  "patchPlan": [],
+  "metadata": {
+    "compareMode": "structured",
+    "compareStopSignals": {
+      "targetVsBaseline": "flat",
+      "targetVsReferenceGap": "none",
+      "improvementHeadroom": "medium",
+      "overfitRisk": "low",
+      "stopRecommendation": "continue"
+    },
+    "model": "deepseek",
+    "timestamp": 1774176444287,
+    "duration": 21041,
+    "compareJudgements": [
+      {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "leftSnapshotId": "a",
+        "leftSnapshotLabel": "A",
+        "leftRole": "target",
+        "rightSnapshotId": "b",
+        "rightSnapshotLabel": "B",
+        "rightRole": "baseline",
+        "verdict": "similar",
+        "winner": "none",
+        "confidence": "high",
+        "pairSignal": "flat",
+        "analysis": "Target 和 Baseline 的输出在核心风险识别、风险等级判断以及建议的行动方向上完全一致。Target 在措辞上略有简化（如“改结算周期” vs “调整结算周期”），但这属于风格微调，并未引入新的实质性信息或改进。两者都准确识别了单方修改权、无通知暂停服务和违约责任失衡三个核心风险点，并给出了相同的谈判方向。",
+        "evidence": [
+          "风险等级 (risk_level) 均为 'high'。",
+          "核心风险 (core_risks) 列表内容实质等价：均包含单方修改结算周期、无通知暂停服务、违约责任失衡三点。",
+          "建议行动 (recommended_action) 方向一致：均要求增加通知义务、限制单方变更、并要求平台承担对等责任。"
+        ],
+        "learnableSignals": [
+          "当两个版本在风险等级、核心风险点和行动建议上完全等价时，应判定为 flat，表明优化未产生实质性变化。"
+        ],
+        "overfitWarnings": []
+      },
+      {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "leftSnapshotId": "a",
+        "leftSnapshotLabel": "A",
+        "leftRole": "target",
+        "rightSnapshotId": "c",
+        "rightSnapshotLabel": "C",
+        "rightRole": "reference",
+        "verdict": "similar",
+        "winner": "none",
+        "confidence": "high",
+        "pairSignal": "none",
+        "analysis": "两个输出在核心风险识别、风险等级判断和行动建议上完全等价，仅在措辞上存在细微差异，这些差异不构成可学习的结构性差距。",
+        "evidence": [
+          "风险等级 (risk_level) 均为 'high'。",
+          "核心风险 (core_risks) 均准确识别出三项：'平台可单方改结算周期'、'平台可未通知暂停服务'、以及违约责任失衡问题（Target用'明显失衡'，Reference用'缺乏对等性'）。",
+          "推荐行动 (recommended_action) 均指向相同的三个谈判要点：补充通知义务、限制单方变更范围、补齐平台违约责任。Target的表述更具体（'要求补充...并补齐...'），Reference的表述更概括（'要求把...补齐后再推进'），但实质内容一致。"
+        ],
+        "learnableSignals": [],
+        "overfitWarnings": []
+      },
+      {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "leftSnapshotId": "c",
+        "leftSnapshotLabel": "C",
+        "leftRole": "reference",
+        "rightSnapshotId": "d",
+        "rightSnapshotLabel": "D",
+        "rightRole": "referenceBaseline",
+        "verdict": "similar",
+        "winner": "none",
+        "confidence": "high",
+        "pairSignal": "supported",
+        "analysis": "两个版本在核心风险判断、风险等级和行动建议上完全一致，仅在措辞风格上存在微小差异，这符合 prompt 改动（从“保持客观、精炼”到“用更简洁、偏业务同学可读的中文表达”）的预期方向，表明该改动在参考侧也成立，并非仅对目标侧有效。",
+        "evidence": [
+          "两个输出均判定风险等级为 'high'。",
+          "两个输出识别出的核心风险点实质相同：单方修改结算周期、未通知暂停服务、违约责任不对等。",
+          "两个输出给出的行动建议核心内容一致：要求补充通知义务、限制单方变更、增加平台责任。",
+          "措辞差异仅在于表达风格：左侧（C）更口语化（如'补齐'），右侧（D）更书面化（如'建议补充'）。"
+        ],
+        "learnableSignals": [
+          "当两个版本在核心结论、风险点和行动建议上实质等价时，应倾向于判定为相似（similar），而非因风格差异误判为信息不足。",
+          "Prompt 中从通用指令转向更具体的受众导向指令（如'偏业务同学可读'），在参考侧也得到了支持，表现为输出风格向更简洁、直接的方向调整。"
+        ],
+        "overfitWarnings": []
+      }
+    ],
+    "snapshotRoles": {
+      "a": "target",
+      "b": "baseline",
+      "c": "reference",
+      "d": "referenceBaseline"
+    },
+    "compareInsights": {
+      "pairHighlights": [
+        {
+          "pairKey": "target-vs-baseline",
+          "pairType": "targetBaseline",
+          "pairLabel": "Target vs Baseline",
+          "pairSignal": "flat",
+          "verdict": "similar",
+          "confidence": "high",
+          "analysis": "Target 和 Baseline 的输出在核心风险识别、风险等级判断以及建议的行动方向上完全一致。Target 在措辞上略有简化（如“改结算周期” vs “调整结算周期”），但这属于风格微调，并未引入新的实质性信息或改进。两者都准确识别了单方修改权、无通知暂停服务和违约责任失衡三个核心风险点，并给出了相同的谈判方向。"
+        },
+        {
+          "pairKey": "target-vs-reference",
+          "pairType": "targetReference",
+          "pairLabel": "Target vs Reference",
+          "pairSignal": "none",
+          "verdict": "similar",
+          "confidence": "high",
+          "analysis": "两个输出在核心风险识别、风险等级判断和行动建议上完全等价，仅在措辞上存在细微差异，这些差异不构成可学习的结构性差距。"
+        },
+        {
+          "pairKey": "reference-vs-reference-baseline",
+          "pairType": "referenceBaseline",
+          "pairLabel": "Reference vs Reference Baseline",
+          "pairSignal": "supported",
+          "verdict": "similar",
+          "confidence": "high",
+          "analysis": "两个版本在核心风险判断、风险等级和行动建议上完全一致，仅在措辞风格上存在微小差异，这符合 prompt 改动（从“保持客观、精炼”到“用更简洁、偏业务同学可读的中文表达”）的预期方向，表明该改动在参考侧也成立，并非仅对目标侧有效。"
+        }
+      ],
+      "progressSummary": {
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "pairSignal": "flat",
+        "verdict": "similar",
+        "confidence": "high",
+        "analysis": "Target 和 Baseline 的输出在核心风险识别、风险等级判断以及建议的行动方向上完全一致。Target 在措辞上略有简化（如“改结算周期” vs “调整结算周期”），但这属于风格微调，并未引入新的实质性信息或改进。两者都准确识别了单方修改权、无通知暂停服务和违约责任失衡三个核心风险点，并给出了相同的谈判方向。"
+      },
+      "referenceGapSummary": {
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "pairSignal": "none",
+        "verdict": "similar",
+        "confidence": "high",
+        "analysis": "两个输出在核心风险识别、风险等级判断和行动建议上完全等价，仅在措辞上存在细微差异，这些差异不构成可学习的结构性差距。"
+      },
+      "promptChangeSummary": {
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "pairSignal": "supported",
+        "verdict": "similar",
+        "confidence": "high",
+        "analysis": "两个版本在核心风险判断、风险等级和行动建议上完全一致，仅在措辞风格上存在微小差异，这符合 prompt 改动（从“保持客观、精炼”到“用更简洁、偏业务同学可读的中文表达”）的预期方向，表明该改动在参考侧也成立，并非仅对目标侧有效。"
+      },
+      "evidenceHighlights": [
+        "风险等级 (risk_level) 均为 'high'。",
+        "核心风险 (core_risks) 列表内容实质等价：均包含单方修改结算周期、无通知暂停服务、违约责任失衡三点。",
+        "建议行动 (recommended_action) 方向一致：均要求增加通知义务、限制单方变更、并要求平台承担对等责任。",
+        "核心风险 (core_risks) 均准确识别出三项：'平台可单方改结算周期'、'平台可未通知暂停服务'、以及违约责任失衡问题（Target用'明显失衡'，Reference用'缺乏对等性'）。",
+        "推荐行动 (recommended_action) 均指向相同的三个谈判要点：补充通知义务、限制单方变更范围、补齐平台违约责任。Target的表述更具体（'要求补充...并补齐...'），Reference的表述更概括（'要求把...补齐后再推进'），但实质内容一致。",
+        "两个输出均判定风险等级为 'high'。"
+      ],
+      "learnableSignals": [
+        "当两个版本在风险等级、核心风险点和行动建议上完全等价时，应判定为 flat，表明优化未产生实质性变化。",
+        "当两个版本在核心结论、风险点和行动建议上实质等价时，应倾向于判定为相似（similar），而非因风格差异误判为信息不足。",
+        "Prompt 中从通用指令转向更具体的受众导向指令（如'偏业务同学可读'），在参考侧也得到了支持，表现为输出风格向更简洁、直接的方向调整。"
+      ]
+    }
+  }
+}

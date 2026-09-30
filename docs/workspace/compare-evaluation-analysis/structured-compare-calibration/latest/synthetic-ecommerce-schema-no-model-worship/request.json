@@ -1,0 +1,95 @@
+{
+  "type": "compare",
+  "evaluationModelKey": "deepseek",
+  "mode": {
+    "functionMode": "basic",
+    "subMode": "system"
+  },
+  "focus": {
+    "content": "即便 reference 看上去更完整、更自然，只要 prompt 改动造成字段名或外层结构变化，就应把 target 相对 baseline 判为回退。",
+    "source": "system",
+    "priority": "highest"
+  },
+  "target": {
+    "workspacePrompt": "你是电商商品信息抽取助手。\n输出一个 JSON 对象，字段改为 product_name, buyer_highlights, cautions。\n为了后续扩展，把三个字段统一包在 payload 里。\n不要解释。",
+    "referencePrompt": "你是电商商品信息抽取助手。\n只输出 JSON 对象，字段必须为 title, selling_points, cautions。\n不要改字段名，不要添加外层包裹对象，不要解释。"
+  },
+  "testCases": [
+    {
+      "id": "tc-1",
+      "input": {
+        "kind": "text",
+        "label": "商品文案",
+        "content": "便携手冲咖啡壶，容量 600ml，适合露营和办公室使用，主打双层不锈钢保温，注意不支持电磁炉直火加热。"
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "a",
+      "label": "A",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "Workspace"
+      },
+      "promptText": "你是电商商品信息抽取助手。\n输出一个 JSON 对象，字段改为 product_name, buyer_highlights, cautions。\n为了后续扩展，把三个字段统一包在 payload 里。\n不要解释。",
+      "output": "{\"payload\":{\"product_name\":\"便携手冲咖啡壶\",\"buyer_highlights\":[\"600ml 容量\",\"适合露营和办公室\",\"双层不锈钢保温\"],\"cautions\":[\"不支持电磁炉直火加热\"]}}",
+      "modelKey": "custom",
+      "versionLabel": "workspace"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "version",
+        "version": 4,
+        "label": "Previous"
+      },
+      "promptText": "你是电商商品信息抽取助手。\n只输出 JSON 对象，字段必须为 title, selling_points, cautions。\n不要改字段名，不要添加外层包裹对象，不要解释。",
+      "output": "{\"title\":\"便携手冲咖啡壶\",\"selling_points\":[\"600ml 容量\",\"适合露营和办公室\",\"双层不锈钢保温\"],\"cautions\":[\"不支持电磁炉直火加热\"]}",
+      "modelKey": "custom",
+      "versionLabel": "v4"
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "Teacher Workspace"
+      },
+      "promptText": "你是电商商品信息抽取助手。\n输出一个 JSON 对象，字段改为 product_name, buyer_highlights, cautions。\n为了后续扩展，把三个字段统一包在 payload 里。\n不要解释。",
+      "output": "{\"payload\":{\"product_name\":\"便携手冲咖啡壶\",\"buyer_highlights\":[\"双场景使用：露营与办公室\",\"600ml 大容量\",\"双层不锈钢保温更稳\"],\"cautions\":[\"不支持电磁炉直火加热\"]}}",
+      "modelKey": "deepseek",
+      "versionLabel": "teacher-workspace"
+    },
+    {
+      "id": "d",
+      "label": "D",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "version",
+        "version": 4,
+        "label": "Teacher Previous"
+      },
+      "promptText": "你是电商商品信息抽取助手。\n只输出 JSON 对象，字段必须为 title, selling_points, cautions。\n不要改字段名，不要添加外层包裹对象，不要解释。",
+      "output": "{\"title\":\"便携手冲咖啡壶\",\"selling_points\":[\"600ml 容量\",\"适合露营和办公室\",\"双层不锈钢保温\"],\"cautions\":[\"不支持电磁炉直火加热\"]}",
+      "modelKey": "deepseek",
+      "versionLabel": "teacher-v4"
+    }
+  ],
+  "compareHints": {
+    "mode": "structured",
+    "snapshotRoles": {
+      "a": "target",
+      "b": "baseline",
+      "c": "reference",
+      "d": "referenceBaseline"
+    },
+    "hasSharedTestCases": true,
+    "hasSamePromptSnapshots": true,
+    "hasCrossModelComparison": true
+  }
+}

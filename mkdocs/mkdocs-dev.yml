@@ -1,0 +1,177 @@
+# 快速开发配置 - 精简但保留基本 i18n 支持
+site_name: Prompt Optimizer Docs (Dev)
+site_url: https://docs.always200.com
+site_description: Prompt Optimizer 文档（开发模式）
+site_author: linshenkx
+
+# 源与产物目录
+docs_dir: docs
+site_dir: site
+
+# 主题：Material（精简配置）
+theme:
+  name: material
+  custom_dir: overrides
+  font: false
+  logo: assets/images/logo.png
+  favicon: assets/images/favicon.png
+  features:
+    - content.code.copy
+    - navigation.instant
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+
+# 精简插件配置 - 包含基本i18n支持
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: zh
+          name: 简体中文
+          build: true
+          default: true
+          nav:
+            - 首页: index.md
+            - 用户指南:
+                - 快速开始: user/quick-start.md
+            - 功能指南:
+                - 基础管理:
+                    - 模型管理: basic/models.md
+                    - 模板管理: basic/templates.md
+                    - 历史记录: basic/history.md
+                    - 收藏与导入: basic/favorites.md
+                    - 提示词库: basic/prompt-garden.md
+                    - 数据管理: basic/data.md
+                - 基础模式:
+                    - 系统提示词优化: basic/system-optimization.md
+                    - 用户提示词优化: basic/user-optimization.md
+                - 高级模式:
+                    - 变量管理: advanced/variables.md
+                    - 上下文管理: advanced/context.md
+                    - 工具调用: advanced/tools.md
+                - 辅助功能:
+                    - 变量智能填充: auxiliary/smart-fill.md
+                    - 文生图复刻: auxiliary/replicate.md
+                    - 风格学习: auxiliary/style-learn.md
+            - 部署指南:
+                - Web版部署: deployment/web.md
+                - 桌面应用: deployment/desktop.md
+                - Chrome插件: deployment/extension.md
+                - Docker部署:
+                    - 基础部署: deployment/docker-basic.md
+                    - 高级配置: deployment/docker-advanced.md
+                    - 故障排除: deployment/docker-troubleshooting.md
+                - MCP服务器: user/mcp-server.md
+            - 帮助支持:
+                - 常见问题: help/common-questions.md
+                - 连接问题: help/connection-issues.md
+                - 故障排除: help/troubleshooting.md
+                - 技术支持: help/support.md
+            - 使用案例:
+                - 系统提示词优化:
+                    - 示例与最佳实践: examples/system-prompt-examples.md
+                - 用户提示词优化:
+                    - 示例与最佳实践: examples/user-prompt-examples.md
+                    - 创意写作: examples/creative-writing.md
+                    - 商务沟通: examples/business-communication.md
+                    - 教学培训: examples/educational-training.md
+        - locale: en
+          name: English
+          build: true
+          nav:
+            - Home: index.md
+            - User Guide:
+                - Quick Start: user/quick-start.md
+                - Basic Features:
+                    - System Prompt Workspace: basic/system-optimization.md
+                    - User Prompt Workspace: basic/user-optimization.md
+                    - Model Management: basic/models.md
+                    - History Management: basic/history.md
+                    - Template Management: basic/templates.md
+                    - Favorites & Import: basic/favorites.md
+                    - Prompt Library: basic/prompt-garden.md
+                    - Data Management: basic/data.md
+                - Advanced Features:
+                    - Variable Management: advanced/variables.md
+                    - Tool Calling: advanced/tools.md
+                    - Context Management: advanced/context.md
+                - Auxiliary Features:
+                    - Smart Variable Fill: auxiliary/smart-fill.md
+                    - Text-to-Image Replicate: auxiliary/replicate.md
+                    - Style Learning: auxiliary/style-learn.md
+            - Deployment:
+                - Web Deployment: deployment/web.md
+                - Desktop App: deployment/desktop.md
+                - Chrome Extension: deployment/extension.md
+                - Docker Deployment:
+                    - Basic Deployment: deployment/docker-basic.md
+                    - Advanced Configuration: deployment/docker-advanced.md
+                    - Troubleshooting: deployment/docker-troubleshooting.md
+                - MCP Server: user/mcp-server.md
+            - Help & Support:
+                - Common Questions: help/common-questions.md
+                - Connection Issues: help/connection-issues.md
+                - Troubleshooting: help/troubleshooting.md
+                - Technical Support: help/support.md
+            - Use Cases:
+                - Creative Writing: examples/creative-writing.md
+                - Business Communication: examples/business-communication.md
+                - Educational Training: examples/educational-training.md
+            - Developer Guide:
+                - Media Examples: guide/media.md
+
+# Markdown 扩展
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      use_pygments: false  # 使用客户端高亮，加快构建速度
+  - attr_list
+
+extra_css:
+  - assets/stylesheets/brand-home.css
+
+# 导航配置已移至 i18n 插件内，为每种语言提供本地化导航
+
+# 额外配置：语言切换
+extra:
+  alternate:
+    - name: 简体中文
+      link: / 
+      lang: zh
+    - name: English  
+      link: /en/
+      lang: en
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/linshenkx/prompt-optimizer
+      name: GitHub
+  website_url: https://always200.com
+  garden_url: https://garden.always200.com
+  product_name: 优化器
+  product_url: https://prompt.always200.com
+
+# 开发优化设置
+dev_addr: '127.0.0.1:8000'
+use_directory_urls: false  # 简化 URL 结构
+
+# 仓库与编辑链接（与主配置保持一致）
+repo_url: https://github.com/linshenkx/prompt-optimizer
+repo_name: linshenkx/prompt-optimizer
+edit_uri: edit/main/mkdocs/docs/

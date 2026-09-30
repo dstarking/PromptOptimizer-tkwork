@@ -1,0 +1,10 @@
+## 必需依赖（开发阶段：跟随最新）
+# 注意：当前不固定版本，安装时将获取镜像/官方源上的最新可用版本。
+# 若需稳定构建，请在确认可用后 pin 到具体版本。
+mkdocs
+mkdocs-material
+mkdocs-static-i18n
+pymdown-extensions
+mike
+mkdocs-mermaid2-plugin
+

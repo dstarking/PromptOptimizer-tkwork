@@ -1,0 +1,104 @@
+# pro-multi-prompt-only-system-selected
+
+## Meta
+- Type: `prompt-only`
+- Model: `dashscope`
+- Duration: `9498ms`
+- Timestamp: `1773729204349`
+
+## Score
+- Overall: `40`
+
+| Key | Label | Score |
+| --- | --- | --- |
+| `goalClarity` | 目标清晰度 | 50 |
+| `instructionCompleteness` | 指令完备度 | 30 |
+| `structuralExecutability` | 结构可执行性 | 40 |
+| `ambiguityControl` | 歧义控制 | 20 |
+| `robustness` | 稳健性 | 60 |
+
+## Improvements
+
+- 增加角色行为规范，例如写作风格、情感倾向或格式要求，以明确诗人身份的输出边界。
+- 补充任务引导语句，使 system 消息能更主动地引导 user 输入中的主题生成高质量诗作。
+- 引入稳定性约束词（如“请根据用户提供的主题”），防止模型在不同输入下偏离写诗任务。
+
+## Patch Plan
+
+### Patch 1
+- Op: `replace`
+- Instruction: 原提示词角色定位模糊，无法稳定引导写诗任务；新增描述强化专业性和任务引导性。
+
+#### Old Text
+
+```text
+你是一个诗人
+```
+
+#### New Text
+
+```text
+你是一位专业的诗人，擅长根据用户提供的主题创作富有情感和意象的诗歌。
+```
+
+## Summary
+
+当前提示词缺乏对角色职责和任务引导的明确说明，需增强表达以确保写诗任务的稳定性。
+
+## Raw Response JSON
+
+```json
+{
+  "type": "prompt-only",
+  "score": {
+    "overall": 40,
+    "dimensions": [
+      {
+        "key": "goalClarity",
+        "label": "目标清晰度",
+        "score": 50
+      },
+      {
+        "key": "instructionCompleteness",
+        "label": "指令完备度",
+        "score": 30
+      },
+      {
+        "key": "structuralExecutability",
+        "label": "结构可执行性",
+        "score": 40
+      },
+      {
+        "key": "ambiguityControl",
+        "label": "歧义控制",
+        "score": 20
+      },
+      {
+        "key": "robustness",
+        "label": "稳健性",
+        "score": 60
+      }
+    ]
+  },
+  "improvements": [
+    "增加角色行为规范，例如写作风格、情感倾向或格式要求，以明确诗人身份的输出边界。",
+    "补充任务引导语句，使 system 消息能更主动地引导 user 输入中的主题生成高质量诗作。",
+    "引入稳定性约束词（如“请根据用户提供的主题”），防止模型在不同输入下偏离写诗任务。"
+  ],
+  "summary": "当前提示词缺乏对角色职责和任务引导的明确说明，需增强表达以确保写诗任务的稳定性。",
+  "patchPlan": [
+    {
+      "op": "replace",
+      "oldText": "你是一个诗人",
+      "newText": "你是一位专业的诗人，擅长根据用户提供的主题创作富有情感和意象的诗歌。",
+      "instruction": "原提示词角色定位模糊，无法稳定引导写诗任务；新增描述强化专业性和任务引导性。"
+    }
+  ],
+  "metadata": {
+    "model": "dashscope",
+    "timestamp": 1773729204349,
+    "duration": 9498
+  }
+}
+```
+

@@ -1,0 +1,619 @@
+name: Release Desktop Apps
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'        # 正式版本: v1.0.0, v2.1.3
+      - 'v*.*.*-*'      # 预览版本: v1.0.0-beta.1, v1.0.0-rc.1
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '当前所选 ref 上待发布的版本号（支持 v2.8.0 或 2.8.0）'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  validate-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 校验版本说明文件
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            if [[ "$VERSION" != v* ]]; then
+              VERSION="v$VERSION"
+            fi
+            echo "📝 Using manual input version: $VERSION"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+            echo "🏷️ Using git tag version: $VERSION"
+          fi
+
+          echo "Validating release notes for $VERSION"
+          node scripts/release-notes.js check "$VERSION"
+
+  prepare-release:
+    needs: [test, validate-release-notes]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_no_prefix: ${{ steps.version.outputs.version_no_prefix }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      version_type: ${{ steps.version.outputs.version_type }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 获取版本号和类型
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            if [[ "$VERSION" != v* ]]; then
+              VERSION="v$VERSION"
+            fi
+            echo "📝 Using manual input version: $VERSION"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+            echo "🏷️ Using git tag version: $VERSION"
+          fi
+
+          VERSION_NO_PREFIX="${VERSION#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_no_prefix=$VERSION_NO_PREFIX" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+          IS_PRERELEASE=false
+          VERSION_TYPE="release"
+          if [[ $VERSION =~ -(alpha|beta|rc) ]]; then
+            IS_PRERELEASE=true
+            VERSION_TYPE="prerelease"
+            echo "🧪 Detected prerelease version"
+          elif [[ $VERSION =~ -(hotfix|patch) ]]; then
+            IS_PRERELEASE=false
+            VERSION_TYPE="hotfix"
+            echo "🔧 Detected hotfix version"
+          else
+            IS_PRERELEASE=false
+            VERSION_TYPE="release"
+            echo "🚀 Detected stable release version"
+          fi
+
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+          echo "version_type=$VERSION_TYPE" >> "$GITHUB_OUTPUT"
+
+      - name: 生成 Release 正文
+        run: |
+          CURRENT_TAG="${{ steps.version.outputs.version }}"
+          node scripts/release-notes.js render-body "$CURRENT_TAG" "${{ github.repository }}" > release_body.md
+          echo "Generated release body:"
+          cat release_body.md
+
+      - name: 创建或更新 Draft Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          IS_PRERELEASE: ${{ steps.version.outputs.is_prerelease }}
+        run: |
+          if gh release view "$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release already exists, updating metadata in place"
+            gh release edit "$VERSION" \
+              --repo "${{ github.repository }}" \
+              --title "$VERSION" \
+              --notes-file release_body.md \
+              $([ "$IS_PRERELEASE" = "true" ] && echo "--prerelease")
+          else
+            echo "Creating draft release shell"
+            gh release create "$VERSION" \
+              --repo "${{ github.repository }}" \
+              --title "$VERSION" \
+              --notes-file release_body.md \
+              --target "${GITHUB_SHA}" \
+              --draft \
+              $([ "$IS_PRERELEASE" = "true" ] && echo "--prerelease")
+          fi
+
+  # 构建 Windows 版本
+  build-windows:
+    needs: [prepare-release]
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 动态配置 package.json
+        shell: pwsh
+        run: |
+          $pkgPath = "packages/desktop/package.json"
+          $pkgJson = Get-Content $pkgPath -Raw | ConvertFrom-Json
+          $tagVersion = "${{ needs.prepare-release.outputs.version_no_prefix }}"
+
+          Write-Host "✅ Set version to: $tagVersion"
+
+          $repoUrl = "https://github.com/${{ github.repository }}.git"
+          $pkgJson.version = $tagVersion
+          $pkgJson.repository.url = $repoUrl
+
+          $repoInfo = "${{ github.repository }}".split("/")
+          $repoOwner = $repoInfo[0]
+          $repoName = $repoInfo[1]
+          $pkgJson.build.publish.owner = $repoOwner
+          $pkgJson.build.publish.repo = $repoName
+
+          $pkgJson | ConvertTo-Json -Depth 10 | Set-Content $pkgPath -Encoding UTF8
+
+          Write-Host ""
+          Write-Host "📋 Configuration Summary:"
+          Write-Host "   Version: $tagVersion"
+          Write-Host "   Type: ${{ needs.prepare-release.outputs.version_type }}"
+          Write-Host "   Repository: $repoUrl"
+          Write-Host "   Owner: $repoOwner"
+          Write-Host "   Repo: $repoName"
+          Write-Host "   Private: false (fixed)"
+          Write-Host "   Prerelease: ${{ needs.prepare-release.outputs.is_prerelease }}"
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 构建 Desktop 应用
+        run: pnpm build:desktop:ci
+
+      - name: 验证构建产物
+        shell: bash
+        run: |
+          echo "Checking build artifacts..."
+          ls -la packages/desktop/dist/ || echo "No dist directory found"
+
+          exe_files=$(find packages/desktop/dist -name "*.exe" 2>/dev/null | wc -l)
+          zip_files=$(find packages/desktop/dist -name "*.zip" 2>/dev/null | wc -l)
+          blockmap_files=$(find packages/desktop/dist -name "*.blockmap" 2>/dev/null | wc -l)
+
+          echo "Found $exe_files .exe files, $zip_files .zip files, and $blockmap_files .blockmap files"
+
+          if [ "$exe_files" -eq 0 ] || [ "$zip_files" -eq 0 ] || [ "$blockmap_files" -eq 0 ]; then
+            echo "Error: Windows build is missing required release artifacts (.exe, .zip, or .blockmap)"
+            echo "Directory contents:"
+            find packages/desktop/dist -type f 2>/dev/null || echo "Directory not found or empty"
+            exit 1
+          fi
+
+          echo "Build artifacts verification passed"
+
+      - name: 清理调试文件
+        shell: bash
+        run: find packages/desktop/dist -type f -name "builder-debug.yml" -delete
+
+      - name: 直接上传 Windows Release Assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          gh release upload "$VERSION" \
+            packages/desktop/dist/PromptOptimizer-*.exe \
+            packages/desktop/dist/PromptOptimizer-*.zip \
+            packages/desktop/dist/*.blockmap \
+            packages/desktop/dist/latest*.yml \
+            --repo "${{ github.repository }}" \
+            --clobber
+
+  # 构建 macOS 版本
+  build-macos:
+    needs: [prepare-release]
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 动态配置 package.json
+        run: |
+          PKG_PATH="packages/desktop/package.json"
+          TAG_VERSION="${{ needs.prepare-release.outputs.version_no_prefix }}"
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+          IFS='/' read -r REPO_OWNER REPO_NAME <<< "${{ github.repository }}"
+
+          jq --arg version "$TAG_VERSION" \
+             --arg repo_url "$REPO_URL" \
+             --arg repo_owner "$REPO_OWNER" \
+             --arg repo_name "$REPO_NAME" \
+             '.version = $version |
+              .repository.url = $repo_url |
+              .build.publish.owner = $repo_owner |
+              .build.publish.repo = $repo_name' \
+             "$PKG_PATH" > "${PKG_PATH}.tmp" && mv "${PKG_PATH}.tmp" "$PKG_PATH"
+
+          echo "✅ package.json updated successfully"
+          echo ""
+          echo "📋 Configuration Summary:"
+          echo "   Version: $TAG_VERSION"
+          echo "   Type: ${{ needs.prepare-release.outputs.version_type }}"
+          echo "   Repository: $REPO_URL"
+          echo "   Owner: $REPO_OWNER"
+          echo "   Repo: $REPO_NAME"
+          echo "   Private: false (fixed)"
+          echo "   Prerelease: ${{ needs.prepare-release.outputs.is_prerelease }}"
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 构建 Desktop 应用
+        run: pnpm build:desktop:ci
+
+      - name: 验证构建产物
+        run: |
+          echo "Checking build artifacts..."
+          ls -la packages/desktop/dist/ || echo "No dist directory found"
+
+          dmg_files=$(find packages/desktop/dist -name "*.dmg" 2>/dev/null | wc -l)
+          zip_files=$(find packages/desktop/dist -name "*.zip" 2>/dev/null | wc -l)
+          blockmap_files=$(find packages/desktop/dist -name "*.blockmap" 2>/dev/null | wc -l)
+
+          echo "Found $dmg_files .dmg files, $zip_files .zip files, and $blockmap_files .blockmap files"
+
+          if [ "$dmg_files" -eq 0 ] || [ "$zip_files" -eq 0 ] || [ "$blockmap_files" -eq 0 ]; then
+            echo "Error: macOS build is missing required release artifacts (.dmg, .zip, or .blockmap)"
+            echo "Directory contents:"
+            find packages/desktop/dist -type f 2>/dev/null || echo "Directory not found or empty"
+            exit 1
+          fi
+
+          echo "Build artifacts verification passed"
+
+      - name: 清理调试文件
+        run: find packages/desktop/dist -type f -name "builder-debug.yml" -delete
+
+      - name: 直接上传 macOS Release Assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          gh release upload "$VERSION" \
+            packages/desktop/dist/*.dmg \
+            packages/desktop/dist/*.zip \
+            packages/desktop/dist/*.blockmap \
+            packages/desktop/dist/*.yml \
+            --repo "${{ github.repository }}" \
+            --clobber
+
+  # 构建 Linux 版本
+  build-linux:
+    needs: [prepare-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 动态配置 package.json
+        run: |
+          PKG_PATH="packages/desktop/package.json"
+          TAG_VERSION="${{ needs.prepare-release.outputs.version_no_prefix }}"
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+          IFS='/' read -r REPO_OWNER REPO_NAME <<< "${{ github.repository }}"
+
+          jq --arg version "$TAG_VERSION" \
+             --arg repo_url "$REPO_URL" \
+             --arg repo_owner "$REPO_OWNER" \
+             --arg repo_name "$REPO_NAME" \
+             '.version = $version |
+              .repository.url = $repo_url |
+              .build.publish.owner = $repo_owner |
+              .build.publish.repo = $repo_name' \
+             "$PKG_PATH" > "${PKG_PATH}.tmp" && mv "${PKG_PATH}.tmp" "$PKG_PATH"
+
+          echo "✅ package.json updated successfully"
+          echo ""
+          echo "📋 Configuration Summary:"
+          echo "   Version: $TAG_VERSION"
+          echo "   Type: ${{ needs.prepare-release.outputs.version_type }}"
+          echo "   Repository: $REPO_URL"
+          echo "   Owner: $REPO_OWNER"
+          echo "   Repo: $REPO_NAME"
+          echo "   Private: false (fixed)"
+          echo "   Prerelease: ${{ needs.prepare-release.outputs.is_prerelease }}"
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 构建 Desktop 应用
+        run: pnpm build:desktop:ci
+
+      - name: 验证构建产物
+        run: |
+          echo "Checking build artifacts..."
+          ls -la packages/desktop/dist/ || echo "No dist directory found"
+
+          appimage_files=$(find packages/desktop/dist -name "*.AppImage" 2>/dev/null | wc -l)
+          zip_files=$(find packages/desktop/dist -name "*.zip" 2>/dev/null | wc -l)
+          metadata_files=$(find packages/desktop/dist -name "latest*.yml" 2>/dev/null | wc -l)
+
+          echo "Found $appimage_files .AppImage files, $zip_files .zip files, and $metadata_files latest*.yml files"
+
+          if [ "$appimage_files" -eq 0 ] && [ "$zip_files" -eq 0 ]; then
+            echo "Error: No build artifacts (.AppImage or .zip) found in packages/desktop/dist/"
+            echo "Directory contents:"
+            find packages/desktop/dist -type f 2>/dev/null || echo "Directory not found or empty"
+            exit 1
+          fi
+
+          if [ "$metadata_files" -eq 0 ]; then
+            echo "Error: Linux build is missing updater metadata (latest*.yml)"
+            echo "Directory contents:"
+            find packages/desktop/dist -type f 2>/dev/null || echo "Directory not found or empty"
+            exit 1
+          fi
+
+          echo "Build artifacts verification passed"
+
+      - name: 清理调试文件
+        run: find packages/desktop/dist -type f -name "builder-debug.yml" -delete
+
+      - name: 直接上传 Linux Release Assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          shopt -s nullglob
+
+          files=(
+            packages/desktop/dist/*.AppImage
+            packages/desktop/dist/*.zip
+            packages/desktop/dist/latest*.yml
+          )
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "Error: No Linux release assets found to upload"
+            exit 1
+          fi
+
+          echo "Uploading Linux release assets:"
+          printf '  %s\n' "${files[@]}"
+
+          gh release upload "$VERSION" \
+            "${files[@]}" \
+            --repo "${{ github.repository }}" \
+            --clobber
+
+  # 构建 Chrome 插件 ZIP（只允许从 GitHub Release 下载后上传 Chrome Web Store）
+  build-extension:
+    needs: [prepare-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 确认发布构建环境未携带本地 env 文件
+        run: |
+          blocked_env_files=(
+            .env
+            .env.local
+            .env.production
+            .env.production.local
+          )
+
+          for file in "${blocked_env_files[@]}"; do
+            if [ -e "$file" ]; then
+              echo "Error: release extension build must not use local env file: $file"
+              exit 1
+            fi
+          done
+
+      - name: 校验 Chrome 插件 manifest 版本
+        env:
+          EXPECTED_VERSION: ${{ needs.prepare-release.outputs.version_no_prefix }}
+        run: |
+          MANIFEST_VERSION=$(jq -r '.version' packages/extension/public/manifest.json)
+          echo "Expected manifest version: $EXPECTED_VERSION"
+          echo "Actual manifest version:   $MANIFEST_VERSION"
+
+          if [ "$MANIFEST_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "Error: Chrome extension manifest version does not match release tag"
+            exit 1
+          fi
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建 Chrome 插件
+        run: |
+          pnpm build:core
+          pnpm build:ui
+          pnpm build:ext
+
+      - name: 扫描插件产物中的敏感信息
+        run: pnpm check:extension-release-secrets
+
+      - name: 打包 Chrome 插件 ZIP
+        env:
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          ZIP_NAME="PromptOptimizer-chrome-extension-${VERSION}.zip"
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+
+          test -f packages/extension/dist/manifest.json
+          (
+            cd packages/extension/dist
+            zip -r "$GITHUB_WORKSPACE/$ZIP_NAME" .
+          )
+
+          unzip -t "$ZIP_NAME"
+          ls -lh "$ZIP_NAME"
+
+      - name: 上传 Chrome 插件 Release Asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          gh release upload "$VERSION" \
+            "$ZIP_NAME" \
+            --repo "${{ github.repository }}" \
+            --clobber
+
+  publish-release:
+    needs: [prepare-release, build-windows, build-macos, build-linux, build-extension]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 发布 Draft Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+          IS_PRERELEASE: ${{ needs.prepare-release.outputs.is_prerelease }}
+        run: |
+          gh release edit "$VERSION" \
+            --repo "${{ github.repository }}" \
+            --draft=false \
+            --title "$VERSION" \
+            $([ "$IS_PRERELEASE" = "true" ] && echo "--prerelease")
+
+      - name: 验证 Release 元数据
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare-release.outputs.version }}
+        run: |
+          RELEASE_JSON=$(gh release view "$VERSION" \
+            --repo "${{ github.repository }}" \
+            --json name,body,url,assets,isDraft,isPrerelease)
+
+          echo "Release metadata:"
+          echo "$RELEASE_JSON"
+
+          EXPECTED_NAME="$VERSION"
+          RELEASE_NAME=$(echo "$RELEASE_JSON" | jq -r '.name')
+          RELEASE_BODY=$(echo "$RELEASE_JSON" | jq -r '.body')
+          RELEASE_IS_DRAFT=$(echo "$RELEASE_JSON" | jq -r '.isDraft')
+          RELEASE_IS_PRERELEASE=$(echo "$RELEASE_JSON" | jq -r '.isPrerelease')
+          RELEASE_ASSET_NAMES=$(echo "$RELEASE_JSON" | jq -r '.assets[].name')
+          WINDOWS_BLOCKMAP_COUNT=$(echo "$RELEASE_ASSET_NAMES" | grep -Ec '^PromptOptimizer-.*-win-.*\.exe\.blockmap$' || true)
+          MAC_ZIP_BLOCKMAP_COUNT=$(echo "$RELEASE_ASSET_NAMES" | grep -Ec '^PromptOptimizer-.*-mac-.*\.zip\.blockmap$' || true)
+          EXTENSION_ZIP_COUNT=$(echo "$RELEASE_ASSET_NAMES" | grep -Ec '^PromptOptimizer-chrome-extension-v?[0-9]+\.[0-9]+\.[0-9]+.*\.zip$' || true)
+
+          if [ "$RELEASE_NAME" != "$EXPECTED_NAME" ]; then
+            echo "Release name mismatch: expected '$EXPECTED_NAME', got '$RELEASE_NAME'"
+            exit 1
+          fi
+
+          if [ "$RELEASE_IS_DRAFT" != "false" ]; then
+            echo "Release should be published, but is still a draft"
+            exit 1
+          fi
+
+          if [ -z "$RELEASE_BODY" ] || [ "$RELEASE_BODY" = "null" ]; then
+            echo "Release body is empty"
+            exit 1
+          fi
+
+          if [ "${{ needs.prepare-release.outputs.is_prerelease }}" = "true" ] && [ "$RELEASE_IS_PRERELEASE" != "true" ]; then
+            echo "Expected prerelease metadata but release is not marked as prerelease"
+            exit 1
+          fi
+
+          if [ "$WINDOWS_BLOCKMAP_COUNT" -lt 1 ]; then
+            echo "Release is missing Windows differential-update blockmap assets"
+            echo "$RELEASE_ASSET_NAMES"
+            exit 1
+          fi
+
+          if [ "$MAC_ZIP_BLOCKMAP_COUNT" -lt 1 ]; then
+            echo "Release is missing macOS zip blockmap assets for differential updates"
+            echo "$RELEASE_ASSET_NAMES"
+            exit 1
+          fi
+
+          if [ "$EXTENSION_ZIP_COUNT" -lt 1 ]; then
+            echo "Release is missing Chrome extension zip asset"
+            echo "$RELEASE_ASSET_NAMES"
+            exit 1
+          fi

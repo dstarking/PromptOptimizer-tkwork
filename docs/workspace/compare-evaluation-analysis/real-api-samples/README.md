@@ -1,0 +1,80 @@
+# Real API Samples
+
+> 这里保存真实模型调用的 request / rendered messages / response。
+> `request.md` / `rendered-messages.md` / `response.md` 都是从对应 JSON 自动渲染出的可读版本，方便人工检查。
+
+## Cases
+
+- `basic-system-compare`
+  request: [request.md](./basic-system-compare/request.md)
+  rendered: [rendered-messages.md](./basic-system-compare/rendered-messages.md)
+  response: [response.md](./basic-system-compare/response.md)
+- `basic-system-compare-focus`
+  request: [request.md](./basic-system-compare-focus/request.md)
+  rendered: [rendered-messages.md](./basic-system-compare-focus/rendered-messages.md)
+  response: [response.md](./basic-system-compare-focus/response.md)
+- `basic-system-prompt-only-minimal`
+  request: [request.md](./basic-system-prompt-only-minimal/request.md)
+  rendered: [rendered-messages.md](./basic-system-prompt-only-minimal/rendered-messages.md)
+  response: [response.md](./basic-system-prompt-only-minimal/response.md)
+- `basic-system-result`
+  request: [request.md](./basic-system-result/request.md)
+  rendered: [rendered-messages.md](./basic-system-result/rendered-messages.md)
+  response: [response.md](./basic-system-result/response.md)
+- `basic-user-compare`
+  request: [request.md](./basic-user-compare/request.md)
+  rendered: [rendered-messages.md](./basic-user-compare/rendered-messages.md)
+  response: [response.md](./basic-user-compare/response.md)
+- `basic-user-compare-focus`
+  request: [request.md](./basic-user-compare-focus/request.md)
+  rendered: [rendered-messages.md](./basic-user-compare-focus/rendered-messages.md)
+  response: [response.md](./basic-user-compare-focus/response.md)
+- `basic-user-prompt-iterate-focus`
+  request: [request.md](./basic-user-prompt-iterate-focus/request.md)
+  rendered: [rendered-messages.md](./basic-user-prompt-iterate-focus/rendered-messages.md)
+  response: [response.md](./basic-user-prompt-iterate-focus/response.md)
+- `basic-user-prompt-only`
+  request: [request.md](./basic-user-prompt-only/request.md)
+  rendered: [rendered-messages.md](./basic-user-prompt-only/rendered-messages.md)
+  response: [response.md](./basic-user-prompt-only/response.md)
+- `basic-user-result`
+  request: [request.md](./basic-user-result/request.md)
+  rendered: [rendered-messages.md](./basic-user-result/rendered-messages.md)
+  response: [response.md](./basic-user-result/response.md)
+- `basic-user-result-focus`
+  request: [request.md](./basic-user-result-focus/request.md)
+  rendered: [rendered-messages.md](./basic-user-result-focus/rendered-messages.md)
+  response: [response.md](./basic-user-result-focus/response.md)
+- `pro-multi-compare`
+  request: [request.md](./pro-multi-compare/request.md)
+  rendered: [rendered-messages.md](./pro-multi-compare/rendered-messages.md)
+  response: [response.md](./pro-multi-compare/response.md)
+- `pro-multi-prompt-only-system-selected`
+  request: [request.md](./pro-multi-prompt-only-system-selected/request.md)
+  rendered: [rendered-messages.md](./pro-multi-prompt-only-system-selected/rendered-messages.md)
+  response: [response.md](./pro-multi-prompt-only-system-selected/response.md)
+- `pro-multi-prompt-only-user-selected`
+  request: [request.md](./pro-multi-prompt-only-user-selected/request.md)
+  rendered: [rendered-messages.md](./pro-multi-prompt-only-user-selected/rendered-messages.md)
+  response: [response.md](./pro-multi-prompt-only-user-selected/response.md)
+- `pro-multi-result`
+  request: [request.md](./pro-multi-result/request.md)
+  rendered: [rendered-messages.md](./pro-multi-result/rendered-messages.md)
+  response: [response.md](./pro-multi-result/response.md)
+- `pro-variable-compare`
+  request: [request.md](./pro-variable-compare/request.md)
+  rendered: [rendered-messages.md](./pro-variable-compare/rendered-messages.md)
+  response: [response.md](./pro-variable-compare/response.md)
+- `pro-variable-compare-focus`
+  request: [request.md](./pro-variable-compare-focus/request.md)
+  rendered: [rendered-messages.md](./pro-variable-compare-focus/rendered-messages.md)
+  response: [response.md](./pro-variable-compare-focus/response.md)
+- `pro-variable-prompt-only-minimal`
+  request: [request.md](./pro-variable-prompt-only-minimal/request.md)
+  rendered: [rendered-messages.md](./pro-variable-prompt-only-minimal/rendered-messages.md)
+  response: [response.md](./pro-variable-prompt-only-minimal/response.md)
+- `pro-variable-result`
+  request: [request.md](./pro-variable-result/request.md)
+  rendered: [rendered-messages.md](./pro-variable-result/rendered-messages.md)
+  response: [response.md](./pro-variable-result/response.md)
+

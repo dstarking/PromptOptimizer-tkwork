@@ -1,0 +1,260 @@
+[
+  {
+    "phase": "pair-judge:target-vs-reference",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-reference",
+        "pairType": "targetReference",
+        "pairLabel": "Target vs Reference",
+        "purpose": "Identify whether the target still has a learnable gap from the stronger/reference run, and what structural strategy is worth learning.",
+        "signalName": "gap",
+        "allowedSignalValues": [
+          "none",
+          "minor",
+          "major",
+          "unclear"
+        ],
+        "focusBrief": "当两个版本在核心结论、风险点和动作建议上等价时，应更倾向于 flat，而不是把风格差异误判成信息不足。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "合同片段",
+            "content": "合作协议约定平台可单方修改结算周期，并在未通知的情况下暂停服务；违约责任仅约束供应商，不约束平台。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方改结算周期\",\"平台可未通知暂停服务\",\"违约责任明显失衡\"],\"recommended_action\":\"要求补充通知义务、限制单方变更范围，并补齐平台违约责任。\"}"
+      },
+      "rightSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方改结算周期\",\"平台可未通知暂停服务\",\"违约责任缺乏对等性\"],\"recommended_action\":\"要求把通知义务、变更边界和平台违约责任补齐后再推进。\"}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:target-vs-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "target-vs-baseline",
+        "pairType": "targetBaseline",
+        "pairLabel": "Target vs Baseline",
+        "purpose": "Decide whether the current target prompt materially improved, stayed flat, or regressed relative to the previous version.",
+        "signalName": "progress",
+        "allowedSignalValues": [
+          "improved",
+          "flat",
+          "regressed",
+          "unclear"
+        ],
+        "focusBrief": "当两个版本在核心结论、风险点和动作建议上等价时，应更倾向于 flat，而不是把风格差异误判成信息不足。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "合同片段",
+            "content": "合作协议约定平台可单方修改结算周期，并在未通知的情况下暂停服务；违约责任仅约束供应商，不约束平台。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "a",
+        "label": "A",
+        "role": "target",
+        "roleLabel": "Target",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Workspace"
+        },
+        "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+        "modelKey": "custom",
+        "versionLabel": "workspace",
+        "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方改结算周期\",\"平台可未通知暂停服务\",\"违约责任明显失衡\"],\"recommended_action\":\"要求补充通知义务、限制单方变更范围，并补齐平台违约责任。\"}"
+      },
+      "rightSnapshot": {
+        "id": "b",
+        "label": "B",
+        "role": "baseline",
+        "roleLabel": "Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Previous"
+        },
+        "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n保持客观、精炼。\n不要添加解释。",
+        "modelKey": "custom",
+        "versionLabel": "v6",
+        "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方调整结算周期\",\"平台可在未通知情况下暂停服务\",\"违约责任分配失衡\"],\"recommended_action\":\"建议增加通知义务、限制单方修改权限，并要求平台承担对等违约责任。\"}"
+      }
+    }
+  },
+  {
+    "phase": "pair-judge:reference-vs-reference-baseline",
+    "payload": {
+      "scenario": {
+        "language": "zh",
+        "pairKey": "reference-vs-reference-baseline",
+        "pairType": "referenceBaseline",
+        "pairLabel": "Reference vs Reference Baseline",
+        "purpose": "Judge whether the prompt change itself is supported on the reference side, instead of being a target-only coincidence.",
+        "signalName": "promptValidity",
+        "allowedSignalValues": [
+          "supported",
+          "mixed",
+          "unsupported",
+          "unclear"
+        ],
+        "focusBrief": "当两个版本在核心结论、风险点和动作建议上等价时，应更倾向于 flat，而不是把风格差异误判成信息不足。"
+      },
+      "roleBindings": [
+        {
+          "snapshotId": "a",
+          "snapshotLabel": "A",
+          "role": "target",
+          "roleLabel": "Target"
+        },
+        {
+          "snapshotId": "b",
+          "snapshotLabel": "B",
+          "role": "baseline",
+          "roleLabel": "Baseline"
+        },
+        {
+          "snapshotId": "c",
+          "snapshotLabel": "C",
+          "role": "reference",
+          "roleLabel": "Reference"
+        },
+        {
+          "snapshotId": "d",
+          "snapshotLabel": "D",
+          "role": "referenceBaseline",
+          "roleLabel": "Reference Baseline"
+        }
+      ],
+      "testCases": [
+        {
+          "id": "tc-1",
+          "input": {
+            "kind": "text",
+            "label": "合同片段",
+            "content": "合作协议约定平台可单方修改结算周期，并在未通知的情况下暂停服务；违约责任仅约束供应商，不约束平台。"
+          }
+        }
+      ],
+      "leftSnapshot": {
+        "id": "c",
+        "label": "C",
+        "role": "reference",
+        "roleLabel": "Reference",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "workspace",
+          "label": "Teacher Workspace"
+        },
+        "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-workspace",
+        "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方改结算周期\",\"平台可未通知暂停服务\",\"违约责任缺乏对等性\"],\"recommended_action\":\"要求把通知义务、变更边界和平台违约责任补齐后再推进。\"}"
+      },
+      "rightSnapshot": {
+        "id": "d",
+        "label": "D",
+        "role": "referenceBaseline",
+        "roleLabel": "Reference Baseline",
+        "testCaseId": "tc-1",
+        "promptRef": {
+          "kind": "version",
+          "label": "Teacher Previous"
+        },
+        "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n保持客观、精炼。\n不要添加解释。",
+        "modelKey": "deepseek",
+        "versionLabel": "teacher-v6",
+        "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方调整结算周期\",\"平台可在未通知情况下暂停服务\",\"违约责任缺乏对等性\"],\"recommended_action\":\"建议补充通知义务、限制单方变更，并增加平台违约责任。\"}"
+      }
+    }
+  }
+]

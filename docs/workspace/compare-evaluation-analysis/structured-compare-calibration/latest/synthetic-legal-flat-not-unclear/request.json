@@ -1,0 +1,95 @@
+{
+  "type": "compare",
+  "evaluationModelKey": "deepseek",
+  "mode": {
+    "functionMode": "basic",
+    "subMode": "system"
+  },
+  "focus": {
+    "content": "当两个版本在核心结论、风险点和动作建议上等价时，应更倾向于 flat，而不是把风格差异误判成信息不足。",
+    "source": "system",
+    "priority": "highest"
+  },
+  "target": {
+    "workspacePrompt": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+    "referencePrompt": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n保持客观、精炼。\n不要添加解释。"
+  },
+  "testCases": [
+    {
+      "id": "tc-1",
+      "input": {
+        "kind": "text",
+        "label": "合同片段",
+        "content": "合作协议约定平台可单方修改结算周期，并在未通知的情况下暂停服务；违约责任仅约束供应商，不约束平台。"
+      }
+    }
+  ],
+  "snapshots": [
+    {
+      "id": "a",
+      "label": "A",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "Workspace"
+      },
+      "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+      "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方改结算周期\",\"平台可未通知暂停服务\",\"违约责任明显失衡\"],\"recommended_action\":\"要求补充通知义务、限制单方变更范围，并补齐平台违约责任。\"}",
+      "modelKey": "custom",
+      "versionLabel": "workspace"
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "version",
+        "version": 6,
+        "label": "Previous"
+      },
+      "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n保持客观、精炼。\n不要添加解释。",
+      "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方调整结算周期\",\"平台可在未通知情况下暂停服务\",\"违约责任分配失衡\"],\"recommended_action\":\"建议增加通知义务、限制单方修改权限，并要求平台承担对等违约责任。\"}",
+      "modelKey": "custom",
+      "versionLabel": "v6"
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "workspace",
+        "label": "Teacher Workspace"
+      },
+      "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n用更简洁、偏业务同学可读的中文表达。\n不要添加解释。",
+      "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方改结算周期\",\"平台可未通知暂停服务\",\"违约责任缺乏对等性\"],\"recommended_action\":\"要求把通知义务、变更边界和平台违约责任补齐后再推进。\"}",
+      "modelKey": "deepseek",
+      "versionLabel": "teacher-workspace"
+    },
+    {
+      "id": "d",
+      "label": "D",
+      "testCaseId": "tc-1",
+      "promptRef": {
+        "kind": "version",
+        "version": 6,
+        "label": "Teacher Previous"
+      },
+      "promptText": "你是法务风险摘要助手。\n输出一个 JSON 对象，字段为 risk_level, core_risks, recommended_action。\n保持客观、精炼。\n不要添加解释。",
+      "output": "{\"risk_level\":\"high\",\"core_risks\":[\"平台可单方调整结算周期\",\"平台可在未通知情况下暂停服务\",\"违约责任缺乏对等性\"],\"recommended_action\":\"建议补充通知义务、限制单方变更，并增加平台违约责任。\"}",
+      "modelKey": "deepseek",
+      "versionLabel": "teacher-v6"
+    }
+  ],
+  "compareHints": {
+    "mode": "structured",
+    "snapshotRoles": {
+      "a": "target",
+      "b": "baseline",
+      "c": "reference",
+      "d": "referenceBaseline"
+    },
+    "hasSharedTestCases": true,
+    "hasSamePromptSnapshots": true,
+    "hasCrossModelComparison": true
+  }
+}

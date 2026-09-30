@@ -1,0 +1,25 @@
+{#-
+  Override Material language switcher to provide a larger, labeled trigger
+-#}
+{% set is_en = page and page.url and page.url.startswith("en/") %}
+{% set current_lang = "EN" if is_en else "中文" %}
+<div class="md-header__option po-header-language">
+  <div class="md-select">
+    {% set icon = config.theme.icon.alternate or "material/translate" %}
+    <button class="md-header__button md-icon po-lang-trigger" aria-label="{{ lang.t('select.language') }}">
+      {% include ".icons/" ~ icon ~ ".svg" %}
+      <span class="po-lang-trigger__label">{{ current_lang }}</span>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        {% for alt in config.extra.alternate %}
+          <li class="md-select__item">
+            <a href="{{ alt.link | url }}" hreflang="{{ alt.lang }}" class="md-select__link">
+              {{ alt.name }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>

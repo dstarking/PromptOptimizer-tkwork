@@ -1,0 +1,142 @@
+{
+  "generatedAt": "2026-03-22T10:44:18.102Z",
+  "case": {
+    "id": "synthetic-teaching-overfit-regression",
+    "title": "合成样本: 教学讲解里的样例口诀导致回退",
+    "kind": "synthetic"
+  },
+  "summary": {
+    "compareMode": "structured",
+    "summary": "Target相比Baseline在通用性和可迁移性上出现显著回退，为迎合当前特定题目牺牲了结构性解释；与Reference相比仍存在巨大可学习差距；且该提示词改动在Reference侧同样不成立，反而导致退化，表明其过拟合风险极高。",
+    "score": 30,
+    "improvements": [
+      "避免在提示词中为特定数值或表达式硬编码解释规则，这会严重损害泛化能力。",
+      "对于数学概念讲解，应优先构建和输出可迁移的通用规则（如倒数法则），再辅以具体例子演示。",
+      "key_rule 等核心输出字段应包含结构性、原理性的知识，而非针对单一题目的操作指令或具体口诀。"
+    ],
+    "stopSignals": {
+      "targetVsBaseline": "regressed",
+      "targetVsReferenceGap": "major",
+      "improvementHeadroom": "high",
+      "overfitRisk": "high",
+      "stopRecommendation": "review",
+      "stopReasons": [
+        "target regressed vs baseline",
+        "major learnable gap remains vs reference",
+        "reference-side evidence does not support the prompt change",
+        "pairwise judges flagged possible sample overfit"
+      ]
+    },
+    "conflictSignals": [
+      "regressionOutweighsCosmeticGains",
+      "sampleOverfitRiskVisible"
+    ],
+    "pairJudgements": [
+      {
+        "pairType": "targetBaseline",
+        "pairSignal": "regressed",
+        "verdict": "right-better",
+        "confidence": "high"
+      },
+      {
+        "pairType": "targetReference",
+        "pairSignal": "major",
+        "verdict": "right-better",
+        "confidence": "high"
+      },
+      {
+        "pairType": "referenceBaseline",
+        "pairSignal": "unsupported",
+        "verdict": "right-better",
+        "confidence": "high"
+      }
+    ],
+    "expected": {
+      "stopSignals": {
+        "targetVsBaseline": [
+          "regressed"
+        ],
+        "overfitRisk": [
+          "high"
+        ],
+        "stopRecommendation": [
+          "review"
+        ]
+      },
+      "pairSignals": {
+        "targetBaseline": [
+          "regressed"
+        ],
+        "referenceBaseline": [
+          "unsupported"
+        ]
+      },
+      "conflictSignals": [
+        "regressionOutweighsCosmeticGains"
+      ]
+    }
+  },
+  "expectationResults": [
+    {
+      "type": "stopSignal",
+      "key": "targetVsBaseline",
+      "expected": [
+        "regressed"
+      ],
+      "actual": "regressed",
+      "matched": true
+    },
+    {
+      "type": "stopSignal",
+      "key": "overfitRisk",
+      "expected": [
+        "high"
+      ],
+      "actual": "high",
+      "matched": true
+    },
+    {
+      "type": "stopSignal",
+      "key": "stopRecommendation",
+      "expected": [
+        "review"
+      ],
+      "actual": "review",
+      "matched": true
+    },
+    {
+      "type": "pairSignal",
+      "key": "targetBaseline",
+      "expected": [
+        "regressed"
+      ],
+      "actual": [
+        "regressed"
+      ],
+      "matched": true
+    },
+    {
+      "type": "pairSignal",
+      "key": "referenceBaseline",
+      "expected": [
+        "unsupported"
+      ],
+      "actual": [
+        "unsupported"
+      ],
+      "matched": true
+    },
+    {
+      "type": "conflictSignal",
+      "key": "regressionOutweighsCosmeticGains",
+      "expected": [
+        "regressionOutweighsCosmeticGains"
+      ],
+      "actual": [
+        "regressionOutweighsCosmeticGains",
+        "sampleOverfitRiskVisible"
+      ],
+      "matched": true
+    }
+  ]
+}
