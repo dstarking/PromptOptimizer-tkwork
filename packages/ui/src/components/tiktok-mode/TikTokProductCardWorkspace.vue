@@ -8,14 +8,23 @@
         <NText depth="3">{{ t('tiktokProductCard.subtitle') }}</NText>
       </div>
 
-      <div class="tiktok-product-card-model">
-        <NText depth="3">{{ t('tiktokProductCard.model') }}</NText>
-        <TextModelQuickSwitch
-          :model-key="selectedOptimizeModelKeyModel"
-          :options="modelSelection.textModelOptions.value"
-          :refresh-models="modelSelection.refreshTextModels"
-          :disabled="isGenerating"
-        />
+      <div class="tiktok-product-card-header-actions">
+        <NButton
+          secondary
+          data-testid="tiktok-product-card-history"
+          @click="openHistoryPage"
+        >
+          {{ t('tiktokProductCard.openHistory') }}
+        </NButton>
+        <div class="tiktok-product-card-model">
+          <NText depth="3">{{ t('tiktokProductCard.model') }}</NText>
+          <TextModelQuickSwitch
+            :model-key="selectedOptimizeModelKeyModel"
+            :options="modelSelection.textModelOptions.value"
+            :refresh-models="modelSelection.refreshTextModels"
+            :disabled="isGenerating"
+          />
+        </div>
       </div>
     </div>
 
@@ -184,23 +193,6 @@
       </NCard>
     </div>
 
-    <NCard class="tiktok-product-card-history" :title="t('tiktokProductCard.historyTitle')">
-      <NText depth="3" class="tiktok-product-card-history-hint">
-        {{ t('tiktokProductCard.historyImagesNotSaved') }}
-      </NText>
-      <NEmpty v-if="historyEntries.length === 0" :description="t('tiktokProductCard.historyEmpty')" />
-      <div v-else class="tiktok-product-card-history-list">
-        <div v-for="entry in historyEntries" :key="entry.id" class="tiktok-product-card-history-item">
-          <div class="tiktok-product-card-history-copy">
-            <NText strong>{{ entry.title }}</NText>
-            <NText depth="3">{{ t('tiktokProductCard.generatedAt', { time: formatHistoryTime(entry.createdAt) }) }}</NText>
-          </div>
-          <NButton size="small" tertiary @click="loadHistoryEntry(entry)">
-            {{ t('tiktokProductCard.loadHistory') }}
-          </NButton>
-        </div>
-      </div>
-    </NCard>
   </div>
 </template>
 
@@ -228,6 +220,13 @@ import { useWorkspaceModelSelection } from '../../composables/workspaces/useWork
 import { useClipboard } from '../../composables/ui/useClipboard'
 import { useImageInputPreparation } from '../../composables/image/useImageInputPreparation'
 import { useToast } from '../../composables/ui/useToast'
+import { router as routerInstance } from '../../router'
+import {
+  loadTikTokProductCardHistory,
+  TIKTOK_PRODUCT_CARD_HISTORY_KEY,
+  MAX_TIKTOK_PRODUCT_CARD_HISTORY_ENTRIES,
+  type TikTokProductCardHistoryEntry,
+} from '../../utils/tiktok-product-card-history'
 import { fileToImageInputRef } from '../../utils/image-compression'
 import { parseTikTokProductCardSections } from '../../utils/tiktok-product-card-result'
 import {
@@ -237,26 +236,12 @@ import {
 import type { AppServices } from '../../types/services'
 
 const MAX_PRODUCT_IMAGES = 9
-const PRODUCT_CARD_HISTORY_KEY = 'session/tiktok-product-card/history/v1'
-const MAX_HISTORY_ENTRIES = 20
 
 interface UploadedProductImage {
   id: string
   name: string
   previewUrl: string
   input: ImageInputRef
-}
-
-interface ProductCardHistoryEntry {
-  id: string
-  title: string
-  createdAt: number
-  content: string
-  modelKey: string
-  productTitle: string
-  specifications: string
-  supplierDescription: string
-  imageNames: string[]
 }
 
 interface ProductCardModelSession {
@@ -304,7 +289,7 @@ const reasoningText = ref('')
 const isGenerating = ref(false)
 const isPreparingImages = ref(false)
 const isSavingFavorite = ref(false)
-const historyEntries = ref<ProductCardHistoryEntry[]>([])
+const historyEntries = ref<TikTokProductCardHistoryEntry[]>([])
 let generationToken = 0
 
 const resultSections = computed(() => parseTikTokProductCardSections(outputText.value))
@@ -393,34 +378,19 @@ const clearCurrentInput = () => {
   reasoningText.value = ''
 }
 
+const openHistoryPage = () => {
+  void routerInstance.push({ name: 'tiktok-product-card-history' })
+}
+
 const getGenerationTitle = () =>
   productTitle.value.trim() || 'TikTok Product Card Optimization'
-
-const isHistoryEntry = (value: unknown): value is ProductCardHistoryEntry => {
-  if (!value || typeof value !== 'object') return false
-  const candidate = value as Partial<ProductCardHistoryEntry>
-  return Boolean(
-    typeof candidate.id === 'string' &&
-      typeof candidate.title === 'string' &&
-      typeof candidate.createdAt === 'number' &&
-      typeof candidate.content === 'string' &&
-      typeof candidate.modelKey === 'string' &&
-      typeof candidate.productTitle === 'string' &&
-      typeof candidate.specifications === 'string' &&
-      typeof candidate.supplierDescription === 'string' &&
-      Array.isArray(candidate.imageNames),
-  )
-}
 
 const loadHistory = async () => {
   const preferenceService = services.value?.preferenceService
   if (!preferenceService) return
 
   try {
-    const stored = await preferenceService.get<unknown>(PRODUCT_CARD_HISTORY_KEY, [])
-    if (Array.isArray(stored)) {
-      historyEntries.value = stored.filter(isHistoryEntry).slice(0, MAX_HISTORY_ENTRIES)
-    }
+    historyEntries.value = await loadTikTokProductCardHistory(preferenceService)
   } catch (error) {
     console.warn('[TikTokProductCardWorkspace] Failed to load history:', error)
   }
@@ -429,7 +399,7 @@ const loadHistory = async () => {
 const saveHistoryEntry = async () => {
   if (!outputText.value.trim()) return
 
-  const entry: ProductCardHistoryEntry = {
+  const entry: TikTokProductCardHistoryEntry = {
     id: createId(),
     title: getGenerationTitle(),
     createdAt: Date.now(),
@@ -441,17 +411,17 @@ const saveHistoryEntry = async () => {
     imageNames: uploadedImages.value.map((image) => image.name),
   }
   historyEntries.value = [entry, ...historyEntries.value.filter((item) => item.content !== entry.content)]
-    .slice(0, MAX_HISTORY_ENTRIES)
+    .slice(0, MAX_TIKTOK_PRODUCT_CARD_HISTORY_ENTRIES)
 
   try {
-    await services.value?.preferenceService.set(PRODUCT_CARD_HISTORY_KEY, historyEntries.value)
+    await services.value?.preferenceService.set(TIKTOK_PRODUCT_CARD_HISTORY_KEY, historyEntries.value)
   } catch (error) {
     console.warn('[TikTokProductCardWorkspace] Failed to save history:', error)
     toast.warning(t('tiktokProductCard.historySaveFailed'))
   }
 }
 
-const loadHistoryEntry = (entry: ProductCardHistoryEntry) => {
+const loadHistoryEntry = (entry: TikTokProductCardHistoryEntry) => {
   outputText.value = entry.content
   reasoningText.value = ''
   productTitle.value = entry.productTitle
@@ -460,6 +430,15 @@ const loadHistoryEntry = (entry: ProductCardHistoryEntry) => {
   if (entry.modelKey && modelSelection.textModelOptions.value.some((option) => option.value === entry.modelKey)) {
     modelSelection.selectedOptimizeModelKey.value = entry.modelKey
   }
+}
+
+const loadHistoryEntryFromRoute = () => {
+  const historyQuery = routerInstance.currentRoute.value.query.history
+  const historyId = Array.isArray(historyQuery) ? historyQuery[0] : historyQuery
+  if (typeof historyId !== 'string') return
+
+  const entry = historyEntries.value.find((item) => item.id === historyId)
+  if (entry) loadHistoryEntry(entry)
 }
 
 const formatHistoryTime = (timestamp: number) => {
@@ -631,6 +610,7 @@ const saveToFavorites = async () => {
 
 onMounted(async () => {
   await Promise.all([modelSelection.refreshTextModels(), loadHistory()])
+  loadHistoryEntryFromRoute()
 })
 
 onBeforeUnmount(() => {
@@ -664,6 +644,15 @@ onBeforeUnmount(() => {
   margin: 0 0 4px;
   font-size: 20px;
   font-weight: 650;
+}
+
+.tiktok-product-card-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: min(100%, 620px);
+  flex-wrap: wrap;
 }
 
 .tiktok-product-card-model {
@@ -814,8 +803,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
 }
 
-.tiktok-product-card-result-hint,
-.tiktok-product-card-history-hint {
+.tiktok-product-card-result-hint {
   display: block;
   font-size: 12px;
   line-height: 1.45;
@@ -844,30 +832,6 @@ onBeforeUnmount(() => {
   overflow: visible;
 }
 
-.tiktok-product-card-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.tiktok-product-card-history-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--n-border-color);
-  border-radius: 8px;
-}
-
-.tiktok-product-card-history-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
 @media (max-width: 1000px) {
   .tiktok-product-card-grid {
     grid-template-columns: 1fr;
@@ -885,6 +849,12 @@ onBeforeUnmount(() => {
   }
 
   .tiktok-product-card-model {
+    align-items: stretch;
+    flex-direction: column;
+    min-width: 100%;
+  }
+
+  .tiktok-product-card-header-actions {
     align-items: stretch;
     flex-direction: column;
     min-width: 100%;

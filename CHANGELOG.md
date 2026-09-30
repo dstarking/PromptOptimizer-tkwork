@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.11.12] - 2026-09-30
+- EN: This patch moves TikTok product-card history to a dedicated page opened from the product-card header, keeps the workspace focused on inputs and results, and preserves loading saved entries back into the product-card workflow. See [Release Notes (EN)](releases/v2.11.12.en.md).
+- 中文：本次补丁将 TikTok 商品卡历史记录移至独立页面，通过商品卡页右上角按钮进入，保持工作区专注于输入和结果，并保留将历史记录加载回商品卡流程的能力。参见 [版本说明（中文）](releases/v2.11.12.zh-CN.md)。
+
 ## [2.11.11] - 2026-09-30
 - EN: This patch adds the TikTok Shop Singapore pet-supplies product-card optimizer, including image-based analysis, split English listing outputs, AI image prompts, Ctrl+V image paste, and layout fixes for dynamic inputs and product-card history. See [Release Notes (EN)](releases/v2.11.11.en.md).
 - 中文：本次补丁新增 TikTok Shop 新加坡站宠物用品商品卡优化功能，支持基于图片分析、分块输出英文商品卡内容与 AI 图片提示词、Ctrl+V 粘贴图片，并修复动态输入区域与商品卡历史记录的布局问题。参见 [版本说明（中文）](releases/v2.11.11.zh-CN.md)。

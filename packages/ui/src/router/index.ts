@@ -66,6 +66,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../components/tiktok-mode/TikTokProductCardWorkspace.vue')
   },
   {
+    path: '/tiktok/product-card/history',
+    name: 'tiktok-product-card-history',
+    component: () => import('../components/tiktok-mode/TikTokProductCardHistoryPage.vue')
+  },
+  {
     path: '/favorites',
     name: 'favorites',
     component: () => import('../components/favorites/FavoritesPage.vue')

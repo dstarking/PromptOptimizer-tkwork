@@ -96,7 +96,7 @@ const { t } = useI18n()
 // Router（使用 router 单例，避免注入失败/多实例）
 // ========================
 const activeWorkspacePath = computed(() => props.workspacePath || routerInstance.currentRoute.value.path)
-const isTikTokProductCardRoute = computed(() => routerInstance.currentRoute.value.path === '/tiktok/product-card')
+const isTikTokProductCardRoute = computed(() => routerInstance.currentRoute.value.path.startsWith('/tiktok/product-card'))
 
 // 从当前路由计算模式
 const functionMode = computed<FunctionMode>(() => {
