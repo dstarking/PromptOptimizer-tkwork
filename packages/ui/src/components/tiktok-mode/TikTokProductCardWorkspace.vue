@@ -696,10 +696,6 @@ onBeforeUnmount(() => {
   height: max-content;
 }
 
-.tiktok-product-card-input :deep(.n-card__content) {
-  min-height: max-content;
-}
-
 .tiktok-product-card-result {
   align-self: stretch;
 }
@@ -710,6 +706,10 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 12px;
   min-height: 0;
+}
+
+.tiktok-product-card-input :deep(.n-card__content) {
+  min-height: max-content;
 }
 
 .tiktok-product-card-context {
