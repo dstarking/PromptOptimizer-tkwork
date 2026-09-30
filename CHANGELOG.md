@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.11.11] - 2026-09-30
+- EN: This patch adds the TikTok Shop Singapore pet-supplies product-card optimizer, including image-based analysis, split English listing outputs, AI image prompts, Ctrl+V image paste, and layout fixes for dynamic inputs and product-card history. See [Release Notes (EN)](releases/v2.11.11.en.md).
+- 中文：本次补丁新增 TikTok Shop 新加坡站宠物用品商品卡优化功能，支持基于图片分析、分块输出英文商品卡内容与 AI 图片提示词、Ctrl+V 粘贴图片，并修复动态输入区域与商品卡历史记录的布局问题。参见 [版本说明（中文）](releases/v2.11.11.zh-CN.md)。
+
 ## [2.11.10] - 2026-09-10
 - EN: This patch closes an access-password bypass, restores first-use model configuration and model-category tabs, refreshes model and dependency catalogs, preserves restored history order, and completes the Node.js 24 desktop/CI migration. See [Release Notes (EN)](releases/v2.11.10.en.md).
 - 中文：本次补丁修复访问密码绕过问题，恢复首次使用时的模型配置入口与模型分类标签，更新模型和依赖目录，保持历史记录恢复顺序，并完成 Node.js 24 的桌面端与 CI 迁移。参见 [版本说明（中文）](releases/v2.11.10.zh-CN.md)。
