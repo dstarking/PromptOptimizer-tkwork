@@ -11,38 +11,49 @@
         - 导航操作直接调用 router.push
     -->
     <NSpace :size="12" align="center" data-testid="core-nav">
-        <!-- 功能模式选择器 -->
-        <FunctionModeSelector
-            :modelValue="functionMode"
-            :allow-reselect="allowWorkspaceReselect"
-            @change="handleFunctionModeChange"
-        />
+        <template v-if="!isTikTokProductCardRoute">
+            <!-- 功能模式选择器 -->
+            <FunctionModeSelector
+                :modelValue="functionMode"
+                :allow-reselect="allowWorkspaceReselect"
+                @change="handleFunctionModeChange"
+            />
 
-        <!-- 子模式选择器 - 基础模式 -->
-        <OptimizationModeSelectorUI
-            v-if="functionMode === 'basic'"
-            :modelValue="basicSubMode"
-            functionMode="basic"
-            :allow-reselect="allowWorkspaceReselect"
-            @change="handleBasicSubModeChange"
-        />
+            <!-- 子模式选择器 - 基础模式 -->
+            <OptimizationModeSelectorUI
+                v-if="functionMode === 'basic'"
+                :modelValue="basicSubMode"
+                functionMode="basic"
+                :allow-reselect="allowWorkspaceReselect"
+                @change="handleBasicSubModeChange"
+            />
 
-        <!-- 子模式选择器 - 上下文模式 -->
-        <OptimizationModeSelectorUI
-            v-if="functionMode === 'pro'"
-            :modelValue="proSubMode"
-            functionMode="pro"
-            :allow-reselect="allowWorkspaceReselect"
-            @change="handleProSubModeChange"
-        />
+            <!-- 子模式选择器 - 上下文模式 -->
+            <OptimizationModeSelectorUI
+                v-if="functionMode === 'pro'"
+                :modelValue="proSubMode"
+                functionMode="pro"
+                :allow-reselect="allowWorkspaceReselect"
+                @change="handleProSubModeChange"
+            />
 
-        <!-- 子模式选择器 - 图像模式 -->
-        <ImageModeSelector
-            v-if="functionMode === 'image'"
-            :modelValue="imageSubMode"
-            :allow-reselect="allowWorkspaceReselect"
-            @change="handleImageSubModeChange"
-        />
+            <!-- 子模式选择器 - 图像模式 -->
+            <ImageModeSelector
+                v-if="functionMode === 'image'"
+                :modelValue="imageSubMode"
+                :allow-reselect="allowWorkspaceReselect"
+                @change="handleImageSubModeChange"
+            />
+        </template>
+
+        <NButton
+            size="small"
+            :type="isTikTokProductCardRoute ? 'primary' : 'tertiary'"
+            data-testid="function-mode-tiktok-product-card"
+            @click="navigateToTikTokProductCard"
+        >
+            {{ t('nav.tiktokProductCard') }}
+        </NButton>
     </NSpace>
 </template>
 
@@ -63,8 +74,9 @@
  * 🔧 路由架构：直接使用 router.push 进行导航
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { router as routerInstance } from '../../router'
-import { NSpace } from 'naive-ui'
+import { NButton, NSpace } from 'naive-ui'
 import FunctionModeSelector from '../FunctionModeSelector.vue'
 import OptimizationModeSelectorUI from '../OptimizationModeSelector.vue'
 import ImageModeSelector from '../image-mode/ImageModeSelector.vue'
@@ -81,10 +93,13 @@ const props = withDefaults(defineProps<Props>(), {
     allowWorkspaceReselect: false,
 })
 
+const { t } = useI18n()
+
 // ========================
 // Router（使用 router 单例，避免注入失败/多实例）
 // ========================
 const activeWorkspacePath = computed(() => props.workspacePath || routerInstance.currentRoute.value.path)
+const isTikTokProductCardRoute = computed(() => routerInstance.currentRoute.value.path === '/tiktok/product-card')
 
 // 从当前路由计算模式
 const functionMode = computed<FunctionMode>(() => {
@@ -173,5 +188,9 @@ const handleProSubModeChange = (mode: SubMode) => {
 
 const handleImageSubModeChange = (mode: ImageSubMode) => {
     navigateToWorkspacePath(`/image/${mode}`)
+}
+
+const navigateToTikTokProductCard = () => {
+    navigateToWorkspacePath('/tiktok/product-card')
 }
 </script>

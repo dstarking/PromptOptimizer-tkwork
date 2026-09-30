@@ -7,6 +7,7 @@ import testing from './testing'
 import context from './context'
 import image from './image'
 import errors from './errors'
+import tiktokProductCard from './tiktok-product-card'
 
 const messages = {
   ...core,
@@ -18,6 +19,7 @@ const messages = {
   ...context,
   ...image,
   ...errors,
+  ...tiktokProductCard,
 } as const;
 
 export default messages;

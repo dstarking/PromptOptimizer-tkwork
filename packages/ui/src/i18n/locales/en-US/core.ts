@@ -150,7 +150,8 @@ const messages = {
     "about": "About",
     "basicMode": "Basic",
     "contextMode": "Context",
-    "imageMode": "Image"
+    "imageMode": "Image",
+    "tiktokProductCard": "TikTok Product Card"
   },
   "about": {
     "title": "Prompt Optimizer",

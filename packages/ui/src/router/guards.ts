@@ -34,7 +34,7 @@ export const beforeRouteSwitch: NavigationGuard = (to) => {
 
   const subModeKey = parseSubModeKey(to.path)
 
-  if (subModeKey === null && to.path !== '/') {
+  if (subModeKey === null && to.path !== '/' && to.path !== '/tiktok/product-card') {
     const match = to.path.match(/^\/(basic|pro|image)(\/|$)/)
     if (match) {
       const mode = match[1] as WorkspaceMode
