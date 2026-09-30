@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.11.13] - 2026-09-30
+- EN: This patch completes the multilingual copy for the dedicated TikTok product-card history page and keeps the new history entry point consistent across supported locales. See [Release Notes (EN)](releases/v2.11.13.en.md).
+- 中文：本次补丁补齐独立 TikTok 商品卡历史页面的多语言文案，并确保新增历史记录入口在所有支持的语言中保持一致。参见 [版本说明（中文）](releases/v2.11.13.zh-CN.md)。
+
 ## [2.11.12] - 2026-09-30
 - EN: This patch moves TikTok product-card history to a dedicated page opened from the product-card header, keeps the workspace focused on inputs and results, and preserves loading saved entries back into the product-card workflow. See [Release Notes (EN)](releases/v2.11.12.en.md).
 - 中文：本次补丁将 TikTok 商品卡历史记录移至独立页面，通过商品卡页右上角按钮进入，保持工作区专注于输入和结果，并保留将历史记录加载回商品卡流程的能力。参见 [版本说明（中文）](releases/v2.11.12.zh-CN.md)。
