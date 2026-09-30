@@ -11,14 +11,14 @@
       <div class="tiktok-product-card-model">
         <NText depth="3">{{ t('tiktokProductCard.model') }}</NText>
         <TextModelQuickSwitch
-          :model-key="modelSelection.selectedOptimizeModelKey"
+          :model-key="selectedOptimizeModelKeyModel"
           :options="modelSelection.textModelOptions.value"
           :refresh-models="modelSelection.refreshTextModels"
           :disabled="isGenerating"
         />
         <SelectWithConfig
-          v-model="modelSelection.selectedOptimizeModelKey"
-          :options="modelSelection.textModelOptions"
+          v-model="selectedOptimizeModelKeyModel"
+          :options="modelSelection.textModelOptions.value"
           :get-primary="OptionAccessors.getPrimary"
           :get-secondary="OptionAccessors.getSecondary"
           :get-value="OptionAccessors.getValue"
@@ -281,7 +281,10 @@ interface ProductCardModelSession {
   updateTestModel: (value: string) => void
 }
 
-const { t, locale } = useI18n()
+const { t, locale } = useI18n() as unknown as {
+  t: (key: string, params?: Record<string, unknown>) => string
+  locale: Ref<string>
+}
 const toast = useToast()
 const clipboard = useClipboard()
 const { prepareFiles } = useImageInputPreparation()
@@ -302,6 +305,13 @@ const modelSession = reactive<ProductCardModelSession>({
   },
 })
 const modelSelection = useWorkspaceModelSelection(services, modelSession)
+
+const selectedOptimizeModelKeyModel = computed<string>({
+  get: () => modelSelection.selectedOptimizeModelKey.value,
+  set: (value) => {
+    modelSelection.selectedOptimizeModelKey.value = value
+  },
+})
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const uploadedImages = ref<UploadedProductImage[]>([])
