@@ -21,7 +21,7 @@ const messages = {
     generating: '正在分析圖片並生成方案...',
     clear: '清空目前輸入',
     resultTitle: '商品卡優化結果',
-    resultHint: '結果會按商品識別、SEO、描述、9 圖方案和 CTR 分析分塊展示。',
+    resultHint: '結果僅展示優化後的英文標題、英文商品描述和一個最佳主圖提示詞。',
     emptyResult: '上傳至少一張商品圖片後生成方案。',
     copy: '複製全部',
     download: '匯出 Markdown',

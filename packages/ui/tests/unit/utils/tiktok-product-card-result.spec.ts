@@ -4,27 +4,27 @@ import { parseTikTokProductCardSections } from '../../../src/utils/tiktok-produc
 describe('parseTikTokProductCardSections', () => {
   it('splits numbered markdown headings into ordered product-card blocks', () => {
     const sections = parseTikTokProductCardSections([
-      '# 01. Product Identification',
-      'Product type: pet bowl',
+      '# 01. Optimized Product Title',
+      'Interactive Cat Toy for Indoor Play',
       '',
-      '## 02. Confirmed Product Information',
-      'Material: stainless steel',
+      '## 02. Optimized Product Description',
+      'Keep indoor cats engaged with active play.',
       '',
-      '## 14. Seller Confirmation Required',
-      'Confirm the material before publishing.',
+      '## 03. Best Main Image Prompt',
+      'Use the uploaded product as the exact reference.',
     ].join('\n'))
 
     expect(sections.map((section) => section.key)).toEqual([
-      'identification',
-      'confirmed',
-      'seller-confirmation',
+      'title',
+      'description',
+      'main-image-prompt',
     ])
-    expect(sections[0]?.content).toContain('Product type: pet bowl')
-    expect(sections[2]?.content).toContain('Confirm the material')
+    expect(sections[0]?.content).toContain('Interactive Cat Toy')
+    expect(sections[2]?.content).toContain('exact reference')
     expect(sections.map((section) => section.title)).toEqual([
-      '商品识别',
-      '已确认的商品信息',
-      '卖家确认事项',
+      '优化后的商品标题',
+      '优化后的商品描述',
+      '最佳主图提示词',
     ])
   })
 
@@ -40,23 +40,35 @@ describe('parseTikTokProductCardSections', () => {
     ])
   })
 
-  it('ignores nested headings and merges repeated numbered sections', () => {
+  it('discards extra numbered sections, preambles, and repeated result sections', () => {
     const sections = parseTikTokProductCardSections([
-      '## 01. Product Identification',
-      'First identification detail.',
+      'Unrequested analysis that must not be displayed.',
       '',
-      '### Product Identification',
-      'Nested detail that belongs to the same section.',
+      '## 01. Optimized Product Title',
+      'First title.',
       '',
-      '## 02. Confirmed Product Information',
-      'Confirmed information.',
+      '## 04. SEO Keywords',
+      'extra keywords',
       '',
-      '## 01. Product Identification',
-      'Repeated section detail.',
+      '## 02. Optimized Product Description',
+      'Final description.',
+      '',
+      '## 01. Optimized Product Title',
+      'Repeated title.',
+      '',
+      '## 03. Best Main Image Prompt',
+      'Best prompt.',
     ].join('\n'))
 
-    expect(sections.map((section) => section.key)).toEqual(['identification', 'confirmed'])
-    expect(sections[0]?.content).toContain('Nested detail that belongs to the same section.')
-    expect(sections[0]?.content).toContain('Repeated section detail.')
+    expect(sections.map((section) => section.key)).toEqual([
+      'title',
+      'description',
+      'main-image-prompt',
+    ])
+    expect(sections[0]?.content).toBe('First title.')
+    expect(sections[1]?.content).toBe('Final description.')
+    expect(sections[2]?.content).toBe('Best prompt.')
+    expect(sections.some((section) => section.content.includes('extra keywords'))).toBe(false)
+    expect(sections.some((section) => section.content.includes('Unrequested analysis'))).toBe(false)
   })
 })

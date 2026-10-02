@@ -21,7 +21,7 @@ const messages = {
     generating: 'Analyzing images and generating the package...',
     clear: 'Clear Current Input',
     resultTitle: 'Product Card Optimization Result',
-    resultHint: 'The result is split into product identification, SEO, description, nine-image strategy, and CTR analysis.',
+    resultHint: 'The result only includes the optimized English title, English product description, and one best main-image prompt.',
     emptyResult: 'Upload at least one product image to generate the package.',
     copy: 'Copy All',
     download: 'Export Markdown',

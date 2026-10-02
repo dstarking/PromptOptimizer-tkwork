@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.11.15] - 2026-10-03
+- EN: This patch limits TikTok product-card results to one optimized title, one optimized description, and one selected best main-image prompt, while filtering unrequested model sections from the UI. See [Release Notes (EN)](releases/v2.11.15.en.md).
+- 中文：本次补丁将 TikTok 商品卡结果收缩为一个优化标题、一个优化描述和一个筛选后的最佳主图提示词，并过滤模型额外返回的无关分块。参见 [版本说明（中文）](releases/v2.11.15.zh-CN.md)。
+
 ## [2.11.14] - 2026-09-30
 - EN: This patch prevents nested or repeated model headings from becoming duplicate TikTok product-identification modules by tightening result parsing and the output heading contract. See [Release Notes (EN)](releases/v2.11.14.en.md).
 - 中文：本次补丁收紧商品卡结果解析和输出标题约束，避免模型内部的嵌套或重复标题被错误拆成多个“商品识别”模块。参见 [版本说明（中文）](releases/v2.11.14.zh-CN.md)。
