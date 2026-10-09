@@ -1,6 +1,10 @@
 const messages = {
   tiktokProductCard: {
     desktop: {
+      emptyResult: "準備至少一張商品圖片，選擇 SKU 並核對事實後產生方案。",
+      images: "商品圖片（至少一張）",
+      imagesReady: "已取得 {count} 張商品圖片，可補充或替換。",
+      imagesManual: "尚無可用商品圖片。可先採集連結；若無法取得，請手動上傳或按 Ctrl+V 貼上。",
       missing: "缺失 / 未核實",
       evidence: "原始採集快照與證據（含 SKU 和包裝資訊）",
       ORIGINAL_IMAGES_UNVERIFIED: "原始圖片未核實",
@@ -16,7 +20,7 @@ const messages = {
       "collecting": "正在開啟頁面並核對 SKU 組合…",
       "collected": "採集完成，請選擇目標 SKU 並核對商品事實。",
       "sku": "目標 SKU（必選）",
-      "imageLimit": "採集圖片為展示副本，未驗證為原圖。最多選擇 9 張匹配參考圖，也可手動上傳原圖。",
+      "imageLimit": "將自動匯入最多 9 張可用商品參考圖，優先匹配目標 SKU；採集圖片未驗證為原圖，可手動補充或替換。",
       "importImage": "匯入參考圖",
       "confirm": "我已選擇目標 SKU，並核對或更正所有商品事實及參考圖片。",
       "brand": "品牌 / 商標（如有）",

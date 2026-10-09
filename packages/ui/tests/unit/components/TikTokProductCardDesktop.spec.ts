@@ -41,23 +41,35 @@ vi.mock("../../../src/composables/ui/useToast", () => ({
 vi.mock("../../../src/composables/ui/useClipboard", () => ({
   useClipboard: () => ({ copyText: vi.fn() }),
 }));
+vi.mock("../../../src/composables/image/useImageInputPreparation", () => ({
+  useImageInputPreparation: () => ({
+    prepareFiles: async (files: File[]) => files.map((file) => ({ file })),
+  }),
+}));
+vi.mock("../../../src/services/tiktok-product-card-desktop-images", () => ({
+  adaptDesktopProductImage: async (file: File) => file,
+}));
 
 type State = {
   duration: VideoDuration;
   snapshot?: ProductSnapshot;
   selectedSkuId?: string;
   confirmed: boolean;
+  preparing: boolean;
   result?: EnhancedProductCardResult;
   brandName: string;
   brandAuthorized: boolean;
   images: {
     id: string;
+    sourceId?: string;
     name: string;
     preview: string;
     input: { b64: string; mimeType: string };
   }[];
   generate: () => Promise<void>;
   clear: () => void;
+  collect: () => Promise<void>;
+  importImage: (id: string) => Promise<void>;
 };
 const wrappers: ReturnType<typeof shallowMount>[] = [];
 function output(duration: VideoDuration = 15) {
@@ -148,6 +160,9 @@ async function setup(
         .fn()
         .mockResolvedValue({ browsers: [{ instance_id: "browser" }] }),
       cancelCollect: vi.fn(),
+      collectProduct: vi
+        .fn()
+        .mockResolvedValue(normalizeProductPages(fixtures as never)),
       fetchImage: vi.fn().mockRejectedValue(new Error("IMAGE_DOWNLOAD_FAILED")),
     },
   } as never;
@@ -191,7 +206,13 @@ async function setup(
 beforeEach(() => {
   mocks.warning.mockClear();
   mocks.history = undefined;
-  vi.stubGlobal("URL", Object.assign(URL, { revokeObjectURL: vi.fn() }));
+  vi.stubGlobal(
+    "URL",
+    Object.assign(URL, {
+      revokeObjectURL: vi.fn(),
+      createObjectURL: vi.fn(() => "blob:test"),
+    }),
+  );
 });
 afterEach(() => {
   wrappers.splice(0).forEach((w) => w.unmount());
@@ -199,6 +220,116 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Windows desktop product-card interactions", () => {
+  it("automatically imports public images after collecting and passes their bytes to generation", async () => {
+    const { state, wrapper, testPrompt } = await setup([], [], false);
+    const fetchImage = vi.mocked(window.electronAPI!.productImport!.fetchImage);
+    fetchImage.mockResolvedValue({ mime: "image/png", data: "aGVsbG8=" });
+    await state.collect();
+    const publicImages = state.snapshot!.images.filter(
+      (i) => !i.skuIds.length && i.quality !== "thumbnail",
+    );
+    expect(state.images.map((i) => i.sourceId)).toEqual(
+      publicImages.slice(0, 9).map((i) => i.id),
+    );
+    expect(state.images[0].input).toMatchObject({
+      b64: "aGVsbG8=",
+      mimeType: "image/png",
+    });
+    expect(wrapper.find('[data-testid="product-images-ready"]').exists()).toBe(
+      true,
+    );
+    expect(wrapper.find('[data-testid="product-images-manual"]').exists()).toBe(
+      false,
+    );
+    state.selectedSkuId = state.snapshot!.skus[0].id;
+    await flushPromises();
+    await vi.waitFor(() => expect(state.preparing).toBe(false));
+    state.confirmed = true;
+    await state.generate();
+    expect(testPrompt.mock.calls[0][3]).toEqual(
+      state.images.map((i) => i.input),
+    );
+  });
+  it("keeps usable images when another download fails and avoids duplicate imports", async () => {
+    const { state } = await setup([], [], false);
+    const fetchImage = vi.mocked(window.electronAPI!.productImport!.fetchImage);
+    fetchImage
+      .mockRejectedValueOnce(new Error("IMAGE_DOWNLOAD_FAILED"))
+      .mockResolvedValue({ mime: "image/png", data: "aGVsbG8=" });
+    await state.collect();
+    expect(state.images.length).toBeGreaterThan(0);
+    const before = state.images.length;
+    await state.importImage(state.images[0].sourceId!);
+    expect(state.images).toHaveLength(before);
+  });
+  it("falls back to manual upload for failed downloads or thumbnail-only snapshots", async () => {
+    const { state, wrapper } = await setup([], [], false);
+    await state.collect();
+    expect(state.images).toEqual([]);
+    expect(wrapper.find('[data-testid="product-images-manual"]').exists()).toBe(
+      true,
+    );
+    const snapshot = normalizeProductPages(fixtures as never);
+    snapshot.images.forEach((i) => {
+      i.quality = "thumbnail";
+    });
+    vi.mocked(
+      window.electronAPI!.productImport!.collectProduct,
+    ).mockResolvedValue(snapshot);
+    const fetchImage = vi.mocked(window.electronAPI!.productImport!.fetchImage);
+    fetchImage.mockClear();
+    await state.collect();
+    expect(fetchImage).not.toHaveBeenCalled();
+    expect(state.images).toEqual([]);
+  });
+  it("prioritizes the selected SKU and excludes other SKU references on each switch", async () => {
+    const { state } = await setup([], [], false);
+    vi.mocked(window.electronAPI!.productImport!.fetchImage).mockResolvedValue({
+      mime: "image/png",
+      data: "aGVsbG8=",
+    });
+    await state.collect();
+    const snapshot = state.snapshot!;
+    for (const sku of [
+      snapshot.skus[0],
+      snapshot.skus.find(
+        (s) => s.imageIds[0] !== snapshot.skus[0].imageIds[0],
+      )!,
+    ]) {
+      state.selectedSkuId = sku.id;
+      await flushPromises();
+      await vi.waitFor(() => expect(state.preparing).toBe(false));
+      expect(state.images[0].sourceId).toBe(sku.imageIds[0]);
+      expect(
+        state.images.every((i) => {
+          const source = snapshot.images.find((s) => s.id === i.sourceId)!;
+          return !source.skuIds.length || source.skuIds.includes(sku.id);
+        }),
+      ).toBe(true);
+    }
+  });
+  it("replaces collected images on retry and ignores a stale download after clearing", async () => {
+    const { state } = await setup([], [], false);
+    const fetchImage = vi.mocked(window.electronAPI!.productImport!.fetchImage);
+    fetchImage.mockResolvedValue({ mime: "image/png", data: "aGVsbG8=" });
+    await state.collect();
+    const count = state.images.length;
+    await state.collect();
+    expect(state.images).toHaveLength(count);
+    let release!: (value: { mime: string; data: string }) => void;
+    fetchImage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    );
+    const pending = state.collect();
+    await flushPromises();
+    state.clear();
+    release({ mime: "image/png", data: "aGVsbG8=" });
+    await pending;
+    expect(state.images).toEqual([]);
+  });
   it("lists both enabled configurations and generates with the selected configuration, not just its internal model", async () => {
     const { wrapper, state, testPrompt, set } = await setup();
     const selector = wrapper.findComponent(SelectWithConfig);

@@ -1,6 +1,10 @@
 const messages = {
   tiktokProductCard: {
     desktop: {
+      emptyResult: "Prepare at least one product image, select a SKU and confirm the facts before generating.",
+      images: "Product images (at least one)",
+      imagesReady: "{count} product images ready. Add or replace images if needed.",
+      imagesManual: "No usable product images yet. Collect the link first; if unavailable, upload or paste with Ctrl+V.",
       missing: "Missing / unverified",
       evidence: "Original snapshot and evidence (including SKUs and packaging)",
       ORIGINAL_IMAGES_UNVERIFIED: "Original images unverified",
@@ -16,7 +20,7 @@ const messages = {
       "collecting": "Opening page and verifying SKU combinations…",
       "collected": "Collected. Select the target SKU and confirm the facts.",
       "sku": "Target SKU (required)",
-      "imageLimit": "Imported images are display copies, not verified originals. Select up to 9 matching references, or manually upload originals.",
+      "imageLimit": "Automatically import up to 9 usable product references, prioritizing the selected SKU. Images are not verified originals; add or replace them manually if needed.",
       "importImage": "Import reference",
       "confirm": "I selected the target SKU and checked/corrected all product facts and images.",
       "brand": "Brand / trademark, if present",

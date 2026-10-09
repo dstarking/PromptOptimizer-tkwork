@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.12.2] - 2026-10-09
+- EN: Automatically download usable product references after link collection, prioritize selected SKU images, and fall back to manual upload. See [Release Notes (EN)](releases/v2.12.2.en.md).
+- 中文：链接采集后自动导入可用商品参考图，优先使用目标 SKU 图片，无法获取时提示手动上传。参见 [版本说明（中文）](releases/v2.12.2.zh-CN.md)。
+
 ## [2.12.1] - 2026-10-09
 - EN: Add the home-page configuration selector to Windows TikTok product cards, while retaining per-configuration model quick switching. See [Release Notes (EN)](releases/v2.12.1.en.md).
 - 中文：Windows 商品卡复用首页配置下拉框，支持切换全部已启用配置，并保留配置内模型快切。参见 [版本说明（中文）](releases/v2.12.1.zh-CN.md)。

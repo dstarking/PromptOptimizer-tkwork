@@ -142,7 +142,21 @@
             ></NFormItem
           >
           <div>
-            <NText>{{ t("tiktokProductCard.imageRequired") }}</NText>
+            <NText>{{ t("tiktokProductCard.desktop.images") }}</NText>
+            <NText v-if="images.length" data-testid="product-images-ready">
+              {{
+                t("tiktokProductCard.desktop.imagesReady", {
+                  count: images.length,
+                })
+              }}
+            </NText>
+            <NAlert
+              v-else-if="!busy"
+              type="info"
+              data-testid="product-images-manual"
+            >
+              {{ t("tiktokProductCard.desktop.imagesManual") }}
+            </NAlert>
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -207,7 +221,7 @@
         </NAlert>
         <NEmpty
           v-if="!result"
-          :description="t('tiktokProductCard.emptyResult')"
+          :description="t('tiktokProductCard.desktop.emptyResult')"
         />
         <template v-else>
           <NCard
@@ -372,6 +386,7 @@ const result = ref<EnhancedProductCardResult>();
 let taskId = "",
   active = true,
   restoring = false;
+let imageRevision = 0;
 const selectableImages = computed(
   () =>
     snapshot.value?.images.filter(
@@ -453,8 +468,7 @@ watch(selectedSkuId, async () => {
   clearImages();
   result.value = undefined;
   if (!selectedSkuId.value) return;
-  const sku = snapshot.value?.skus.find((s) => s.id === selectedSkuId.value);
-  if (sku?.imageIds[0]) await importImage(sku.imageIds[0]);
+  await autoImportImages();
 });
 function message(e: unknown) {
   const code = e instanceof Error ? e.message : String(e);
@@ -506,6 +520,8 @@ async function collect() {
     brandAuthorized.value = false;
     confirmed.value = false;
     status.value = t("tiktokProductCard.desktop.collected");
+    await nextTick();
+    await autoImportImages();
   } catch (e) {
     if (active) error.value = message(e);
   } finally {
@@ -516,6 +532,8 @@ async function cancel() {
   await api.cancelCollect(taskId);
 }
 function clearImages() {
+  imageRevision++;
+  preparing.value = false;
   images.value.forEach((i) => URL.revokeObjectURL(i.preview));
   images.value = [];
 }
@@ -524,17 +542,21 @@ function removeImage(id: string) {
   if (i) URL.revokeObjectURL(i.preview);
   images.value = images.value.filter((i) => i.id !== id);
 }
-async function addFiles(files: File[], sourceId?: string) {
+async function addFiles(
+  files: File[],
+  sourceId?: string,
+  revision = imageRevision,
+) {
   if (files.length > 9 - images.value.length)
     toast.warning(t("tiktokProductCard.tooManyImages"));
   const compatible = await Promise.all(
     files.slice(0, 9 - images.value.length).map(adaptDesktopProductImage),
   );
   const prepared = await prepareFiles(compatible);
-  if (!prepared || !active) return;
+  if (!prepared || !active || revision !== imageRevision) return;
   for (const p of prepared) {
     const input = await fileToImageInputRef(p.file);
-    if (!active) return;
+    if (!active || revision !== imageRevision) return;
     images.value.push({
       id: crypto.randomUUID(),
       sourceId,
@@ -574,25 +596,73 @@ async function paste(e: ClipboardEvent) {
 }
 async function importImage(id: string) {
   const image = selectableImages.value.find((i) => i.id === id);
-  if (!image || busy.value || images.value.length >= 9) return;
+  if (
+    !image ||
+    busy.value ||
+    images.value.length >= 9 ||
+    images.value.some((i) => i.sourceId === id)
+  )
+    return;
   preparing.value = true;
   try {
-    const r = await api.fetchImage(image.url);
-    const bytes = Uint8Array.from(atob(r.data), (c) => c.charCodeAt(0));
-    await addFiles(
-      [new File([bytes], id + "." + r.mime.split("/")[1], { type: r.mime })],
-      id,
-    );
+    await downloadImage(image, imageRevision);
   } catch (e) {
     error.value = message(e);
   } finally {
     preparing.value = false;
   }
 }
+async function downloadImage(
+  image: ProductSnapshot["images"][number],
+  revision: number,
+) {
+  const r = await api.fetchImage(image.url);
+  if (!active || revision !== imageRevision) return;
+  const bytes = Uint8Array.from(atob(r.data), (c) => c.charCodeAt(0));
+  await addFiles(
+    [
+      new File([bytes], image.id + "." + r.mime.split("/")[1], {
+        type: r.mime,
+      }),
+    ],
+    image.id,
+    revision,
+  );
+}
+async function autoImportImages() {
+  const revision = imageRevision;
+  const sku = snapshot.value?.skus.find((s) => s.id === selectedSkuId.value);
+  const candidates = [...selectableImages.value].sort(
+    (a, b) =>
+      Number(!!sku?.imageIds.includes(b.id)) -
+      Number(!!sku?.imageIds.includes(a.id)),
+  );
+  const urls = new Set<string>();
+  preparing.value = true;
+  try {
+    for (const image of candidates.slice(0, 9)) {
+      if (!active || revision !== imageRevision || images.value.length >= 9)
+        break;
+      if (
+        urls.has(image.url) ||
+        images.value.some((i) => i.sourceId === image.id)
+      )
+        continue;
+      urls.add(image.url);
+      try {
+        await downloadImage(image, revision);
+      } catch {
+        // A failed reference must not prevent other images or manual upload.
+      }
+    }
+  } finally {
+    if (revision === imageRevision) preparing.value = false;
+  }
+}
 async function generate() {
   if (busy.value) return;
   if (!images.value.length) {
-    toast.warning(t("tiktokProductCard.imageRequiredError"));
+    toast.warning(t("tiktokProductCard.desktop.imagesManual"));
     return;
   }
   if (snapshot.value && (!selectedSkuId.value || !confirmed.value)) {
