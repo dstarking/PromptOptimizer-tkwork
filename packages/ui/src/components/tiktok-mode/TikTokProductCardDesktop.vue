@@ -94,12 +94,28 @@
             </div>
           </template>
           <NFormItem :label="t('tiktokProductCard.model')"
-            ><TextModelQuickSwitch
-              :model-key="modelSelection.selectedOptimizeModelKey.value"
-              :options="modelSelection.textModelOptions.value"
-              :refresh-models="modelSelection.refreshTextModels"
-              :disabled="busy"
-          /></NFormItem>
+            ><div class="model-controls">
+              <TextModelQuickSwitch
+                :model-key="modelSelection.selectedOptimizeModelKey.value"
+                :options="modelSelection.textModelOptions.value"
+                :refresh-models="modelSelection.refreshTextModels"
+                :disabled="busy"
+              /><SelectWithConfig
+                v-model="selectedOptimizeModelKey"
+                data-testid="desktop-product-card-model-select"
+                :options="modelSelection.textModelOptions.value"
+                :get-primary="OptionAccessors.getPrimary"
+                :get-secondary="OptionAccessors.getSecondary"
+                :get-value="OptionAccessors.getValue"
+                :placeholder="t('model.select.placeholder')"
+                :disabled="busy"
+                filterable
+                :show-config-action="true"
+                :show-empty-config-c-t-a="true"
+                @focus="modelSelection.refreshTextModels"
+                @config="openModelManager?.('text')"
+              /></div
+          ></NFormItem>
           <NFormItem :label="t('tiktokProductCard.productTitle')"
             ><NInput v-model:value="title" :disabled="busy"
           /></NFormItem>
@@ -285,6 +301,8 @@ import {
 } from "@prompt-optimizer/core";
 import type { AppServices } from "../../types/services";
 import TextModelQuickSwitch from "../TextModelQuickSwitch.vue";
+import SelectWithConfig from "../SelectWithConfig.vue";
+import { OptionAccessors } from "../../utils/data-transformer";
 import { useWorkspaceModelSelection } from "../../composables/workspaces/useWorkspaceModelSelection";
 import { useImageInputPreparation } from "../../composables/image/useImageInputPreparation";
 import { fileToImageInputRef } from "../../utils/image-compression";
@@ -303,6 +321,9 @@ import {
 const { t } = useI18n();
 const api = window.electronAPI!.productImport!;
 const services = inject<Ref<AppServices | null>>("services", ref(null));
+const openModelManager = inject<
+  ((tab?: "text" | "image" | "function") => void) | null
+>("openModelManager", null);
 const modelSession = reactive({
   selectedOptimizeModelKey: "",
   selectedTestModelKey: "",
@@ -314,6 +335,7 @@ const modelSession = reactive({
   },
 });
 const modelSelection = useWorkspaceModelSelection(services, modelSession);
+const selectedOptimizeModelKey = modelSelection.selectedOptimizeModelKey;
 const { prepareFiles } = useImageInputPreparation();
 const clipboard = useClipboard(),
   toast = useToast();
@@ -796,6 +818,13 @@ header {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 12px 0;
+}
+.model-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 .image-grid img {
   width: 100%;

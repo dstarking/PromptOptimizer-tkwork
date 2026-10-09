@@ -8,6 +8,7 @@ import {
   type VideoDuration,
 } from "@prompt-optimizer/core";
 import Desktop from "../../../src/components/tiktok-mode/TikTokProductCardDesktop.vue";
+import SelectWithConfig from "../../../src/components/SelectWithConfig.vue";
 import { TIKTOK_DESKTOP_HISTORY_KEY } from "../../../src/utils/tiktok-product-card-history";
 import fixtures from "../../../../desktop/services/browserskill/p0-variants.fixture.json";
 
@@ -40,16 +41,6 @@ vi.mock("../../../src/composables/ui/useToast", () => ({
 vi.mock("../../../src/composables/ui/useClipboard", () => ({
   useClipboard: () => ({ copyText: vi.fn() }),
 }));
-vi.mock(
-  "../../../src/composables/workspaces/useWorkspaceModelSelection",
-  () => ({
-    useWorkspaceModelSelection: () => ({
-      selectedOptimizeModelKey: { value: "model" },
-      textModelOptions: { value: [] },
-      refreshTextModels: vi.fn(),
-    }),
-  }),
-);
 
 type State = {
   duration: VideoDuration;
@@ -124,6 +115,25 @@ async function setup(
   seedImages = true,
 ) {
   const testPrompt = vi.fn();
+  const openModelManager = vi.fn();
+  const getEnabledModels = vi.fn().mockResolvedValue([
+    {
+      id: "model",
+      name: "Multimodal",
+      enabled: true,
+      providerMeta: { id: "anthropic", name: "Anthropic" },
+      modelMeta: { id: "claude", name: "Claude" },
+      connectionConfig: {},
+    },
+    {
+      id: "model-2",
+      name: "Xunfei",
+      enabled: true,
+      providerMeta: { id: "custom", name: "OpenAI compatible" },
+      modelMeta: { id: "astro-code-latest", name: "astro-code-latest" },
+      connectionConfig: {},
+    },
+  ]);
   responses.forEach((raw) => testPrompt.mockResolvedValueOnce(raw));
   const set = vi.fn(),
     get = vi
@@ -145,9 +155,11 @@ async function setup(
     global: {
       provide: {
         services: ref({
+          modelManager: { getEnabledModels },
           promptService: { testPrompt },
           preferenceService: { get, set },
         }),
+        openModelManager,
       },
       renderStubDefaultSlot: true,
       stubs: { TextModelQuickSwitch: true },
@@ -167,7 +179,14 @@ async function setup(
     ];
     state.duration = 15;
   }
-  return { wrapper, state, testPrompt, set };
+  return {
+    wrapper,
+    state,
+    testPrompt,
+    set,
+    openModelManager,
+    getEnabledModels,
+  };
 }
 beforeEach(() => {
   mocks.warning.mockClear();
@@ -180,6 +199,31 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Windows desktop product-card interactions", () => {
+  it("lists both enabled configurations and generates with the selected configuration, not just its internal model", async () => {
+    const { wrapper, state, testPrompt, set } = await setup();
+    const selector = wrapper.findComponent(SelectWithConfig);
+    expect(selector.props("options").map((o) => o.value)).toEqual([
+      "model",
+      "model-2",
+    ]);
+    selector.vm.$emit("update:modelValue", "model-2");
+    await flushPromises();
+    expect(selector.props("modelValue")).toBe("model-2");
+    await state.generate();
+    expect(testPrompt.mock.calls[0][2]).toBe("model-2");
+    expect(set.mock.calls[0][1][0].modelKey).toBe("model-2");
+  });
+  it("refreshes configurations on focus and opens the existing text model manager", async () => {
+    const { wrapper, openModelManager, getEnabledModels } = await setup();
+    const selector = wrapper.findComponent(SelectWithConfig);
+    const before = getEnabledModels.mock.calls.length;
+    selector.vm.$emit("focus");
+    await flushPromises();
+    expect(getEnabledModels.mock.calls.length).toBeGreaterThan(before);
+    selector.vm.$emit("config");
+    expect(openModelManager).toHaveBeenCalledWith("text");
+    expect(selector.props("showConfigAction")).toBe(true);
+  });
   it("uses the visible duration and saves four modules only to desktop v2 history", async () => {
     const { state, testPrompt, set } = await setup();
     await state.generate();
