@@ -1,6 +1,15 @@
 const messages = {
   tiktokProductCard: {
     desktop: {
+      streamPreview: "流式生成预览",
+      stream: {
+        waiting: "等待模型响应…",
+        processing: "模型正在处理…",
+        receiving: "正在接收内容…",
+        validating: "正在校验结果…",
+        repairing: "正在修复视频时间线…",
+        failed: "生成失败，已保留收到的内容。",
+      },
       emptyResult: "准备至少一张商品图片，选择 SKU 并核对事实后生成方案。",
       images: "商品图片（至少一张）",
       imagesReady: "已获取 {count} 张商品图片，可补充或替换。",

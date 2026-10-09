@@ -1,6 +1,15 @@
 const messages = {
   tiktokProductCard: {
     desktop: {
+      streamPreview: "串流產生預覽",
+      stream: {
+        waiting: "等待模型回應…",
+        processing: "模型正在處理…",
+        receiving: "正在接收內容…",
+        validating: "正在驗證結果…",
+        repairing: "正在修復影片時間軸…",
+        failed: "產生失敗，已保留收到的內容。",
+      },
       emptyResult: "準備至少一張商品圖片，選擇 SKU 並核對事實後產生方案。",
       images: "商品圖片（至少一張）",
       imagesReady: "已取得 {count} 張商品圖片，可補充或替換。",

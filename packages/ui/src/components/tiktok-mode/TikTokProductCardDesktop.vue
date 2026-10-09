@@ -134,13 +134,6 @@
             :disabled="busy"
             >{{ t("tiktokProductCard.desktop.confirm") }}</NCheckbox
           >
-          <NFormItem :label="t('tiktokProductCard.desktop.brand')"
-            ><NInput v-model:value="brandName" :disabled="busy" /><NCheckbox
-              v-model:checked="brandAuthorized"
-              :disabled="busy"
-              >{{ t("tiktokProductCard.desktop.authorized") }}</NCheckbox
-            ></NFormItem
-          >
           <div>
             <NText>{{ t("tiktokProductCard.desktop.images") }}</NText>
             <NText v-if="images.length" data-testid="product-images-ready">
@@ -219,8 +212,27 @@
             {{ risk.reason }} — {{ risk.suggestion }}
           </div>
         </NAlert>
+        <NCard
+          v-if="
+            !result && (generating || streamText || streamPhase === 'failed')
+          "
+          :title="t('tiktokProductCard.desktop.streamPreview')"
+          data-testid="product-card-stream"
+        >
+          <NText role="status">{{
+            t("tiktokProductCard.desktop.stream." + streamPhase)
+          }}</NText>
+          <NInput
+            v-if="streamText"
+            :value="streamText"
+            type="textarea"
+            readonly
+            :autosize="{ minRows: 6, maxRows: 24 }"
+            data-testid="product-card-stream-text"
+          />
+        </NCard>
         <NEmpty
-          v-if="!result"
+          v-else-if="!result"
           :description="t('tiktokProductCard.desktop.emptyResult')"
         />
         <template v-else>
@@ -323,10 +335,12 @@ import { fileToImageInputRef } from "../../utils/image-compression";
 import { adaptDesktopProductImage } from "../../services/tiktok-product-card-desktop-images";
 import { useClipboard } from "../../composables/ui/useClipboard";
 import { useToast } from "../../composables/ui/useToast";
+import { getI18nErrorMessage } from "../../utils/error";
 import { router } from "../../router";
 import {
   DESKTOP_PRODUCT_CARD_SYSTEM_PROMPT,
   buildDesktopProductPrompt,
+  stripBrandAttributes,
 } from "../../services/tiktok-product-card-desktop-prompt";
 import {
   loadTikTokProductCardHistory,
@@ -357,8 +371,9 @@ const url = ref(""),
   title = ref(""),
   details = ref(""),
   description = ref(""),
-  brandName = ref(""),
-  brandAuthorized = ref(false);
+  streamText = ref("");
+const streamPhase = ref("waiting");
+let generationRevision = 0;
 const duration = ref<VideoDuration>(10),
   snapshot = ref<ProductSnapshot>(),
   selectedSkuId = ref<string>(),
@@ -453,12 +468,7 @@ const markdown = computed(
     videoMarkdown.value,
 );
 const report = computed(() =>
-  checkProductCompliance(
-    result.value ? JSON.stringify(result.value) : "",
-    brandName.value
-      ? { name: brandName.value, authorized: brandAuthorized.value }
-      : undefined,
-  ),
+  checkProductCompliance(result.value ? JSON.stringify(result.value) : ""),
 );
 watch([title, details, description, selectedSkuId], () => {
   confirmed.value = false;
@@ -471,7 +481,7 @@ watch(selectedSkuId, async () => {
   await autoImportImages();
 });
 function message(e: unknown) {
-  const code = e instanceof Error ? e.message : String(e);
+  const code = getI18nErrorMessage(e);
   return t("tiktokProductCard.desktop.failed", { error: code });
 }
 async function checkEnvironment() {
@@ -509,15 +519,12 @@ async function collect() {
     snapshot.value = data;
     selectedSkuId.value = undefined;
     title.value = data.title;
-    details.value = data.attributes
-      .map((a) => a.name + ": " + a.value)
-      .join("\n");
+    details.value = stripBrandAttributes(
+      data.attributes.map((a) => a.name + ": " + a.value).join("\n"),
+    );
     description.value = data.conflicts.includes("DESCRIPTION_PRODUCT_MISMATCH")
       ? ""
       : data.description;
-    brandName.value =
-      data.attributes.find((a) => a.name === "\u54c1\u724c")?.value || "";
-    brandAuthorized.value = false;
     confirmed.value = false;
     status.value = t("tiktokProductCard.desktop.collected");
     await nextTick();
@@ -676,6 +683,9 @@ async function generate() {
     return;
   }
   generating.value = true;
+  const revision = ++generationRevision;
+  streamText.value = "";
+  streamPhase.value = "waiting";
   error.value = "";
   result.value = undefined;
   const ids = images.value.map((i) => i.id),
@@ -690,21 +700,48 @@ async function generate() {
       snapshot: snapshot.value,
       selectedSkuId: selectedSkuId.value,
     };
-    // Preflight flags brand authorization; raw supplier text is NOT treated as consumer copy.
-    const preflight = checkProductCompliance(
-      "",
-      brandName.value
-        ? { name: brandName.value, authorized: brandAuthorized.value }
-        : undefined,
-    );
-    if (preflight.risks.length)
-      toast.warning(t("tiktokProductCard.desktop.brandReview"));
-    const raw = await promptService.testPrompt(
-      DESKTOP_PRODUCT_CARD_SYSTEM_PROMPT,
-      buildDesktopProductPrompt(input),
-      model,
-      images.value.map((i) => i.input),
-    );
+    const current = () => active && revision === generationRevision;
+    const requestStream = async (prompt: string, repairing = false) => {
+      let text = "";
+      let streamError: unknown;
+      if (repairing) {
+        streamPhase.value = "repairing";
+        streamText.value +=
+          "\n\n" + t("tiktokProductCard.desktop.stream.repairing") + "\n";
+      }
+      await promptService.testPromptStream(
+        DESKTOP_PRODUCT_CARD_SYSTEM_PROMPT,
+        prompt,
+        model,
+        {
+          onToken: (token) => {
+            if (!current()) return;
+            text += token;
+            streamText.value += token;
+            streamPhase.value = repairing ? "repairing" : "receiving";
+          },
+          onReasoningToken: () => {
+            if (current() && !text && !repairing)
+              streamPhase.value = "processing";
+          },
+          onComplete: (response) => {
+            if (current() && !text && response?.content) {
+              text = response.content;
+              streamText.value += text;
+            }
+          },
+          onError: (error) => {
+            if (current()) streamError = error;
+          },
+        },
+        images.value.map((i) => i.input),
+      );
+      if (!current()) throw new Error("GENERATION_SUPERSEDED");
+      if (streamError) throw streamError;
+      streamPhase.value = "validating";
+      return text;
+    };
+    const raw = await requestStream(buildDesktopProductPrompt(input));
     let parsed: EnhancedProductCardResult;
     try {
       parsed = parseEnhancedResult(raw, requestedDuration, ids);
@@ -719,13 +756,11 @@ async function generate() {
             .replace(/\s*\x60\x60\x60$/, ""),
         ),
       );
-      const repaired = await promptService.testPrompt(
-        DESKTOP_PRODUCT_CARD_SYSTEM_PROMPT,
+      const repaired = await requestStream(
         buildDesktopProductPrompt(input) +
           "\nRepair only the VIDEO module: clip count, continuous timeline and exact durations must match. Keep the first three modules unchanged. Previous output: " +
           JSON.stringify(original),
-        model,
-        images.value.map((i) => i.input),
+        true,
       );
       const replacement = parseEnhancedResult(repaired, requestedDuration, ids);
       parsed = parseEnhancedResult(
@@ -734,7 +769,7 @@ async function generate() {
         ids,
       );
     }
-    if (!active) return;
+    if (!current()) return;
     result.value = parsed;
     const entry = {
       id: crypto.randomUUID(),
@@ -753,8 +788,6 @@ async function generate() {
         duration: requestedDuration,
         result: parsed,
         compliance: report.value,
-        brandName: brandName.value,
-        brandAuthorized: brandAuthorized.value,
       },
     };
     const pref = services.value?.preferenceService;
@@ -766,9 +799,12 @@ async function generate() {
       );
     }
   } catch (e) {
-    error.value = message(e);
+    if (active && revision === generationRevision) {
+      error.value = message(e);
+      streamPhase.value = "failed";
+    }
   } finally {
-    generating.value = false;
+    if (revision === generationRevision) generating.value = false;
   }
 }
 function editBlock(key: string, value: string) {
@@ -818,6 +854,10 @@ async function favorite() {
   }
 }
 function clear() {
+  generationRevision++;
+  generating.value = false;
+  streamText.value = "";
+  streamPhase.value = "waiting";
   clearImages();
   snapshot.value = undefined;
   selectedSkuId.value = undefined;
@@ -827,8 +867,6 @@ function clear() {
   description.value = "";
   confirmed.value = false;
   duration.value = 10;
-  brandName.value = "";
-  brandAuthorized.value = false;
   error.value = "";
 }
 onMounted(async () => {
@@ -848,8 +886,6 @@ onMounted(async () => {
       selectedSkuId.value = entry.desktop.selectedSkuId;
       snapshot.value = entry.desktop.snapshot;
       result.value = entry.desktop.result;
-      brandName.value = entry.desktop.brandName || "";
-      brandAuthorized.value = entry.desktop.brandAuthorized || false;
       modelSession.updateOptimizeModel(entry.modelKey);
       await nextTick();
       restoring = false;
@@ -860,6 +896,7 @@ onMounted(async () => {
   }
 });
 onBeforeUnmount(() => {
+  generationRevision++;
   active = false;
   clearImages();
   if (collecting.value) void cancel().catch(() => {});

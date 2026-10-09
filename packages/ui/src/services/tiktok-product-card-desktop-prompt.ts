@@ -10,12 +10,24 @@ mainImagePrompt {prompt,referenceImageIds}, video {totalDuration,clips,editingGu
 Each clip has start,end,duration,scene,sellingPoint,caption,voiceover,prompt,referenceImageIds.
 Use only supplied image IDs and the explicitly selected SKU. Never invent dimensions, materials, quantities, accessories, certifications or functionality. Omit uncertain details. Do not mix variant appearances.
 Title: one recommended title, accurate core product name first, relevant feature, use case/benefit and target pet. No keyword stuffing or unverified brands/rankings. SEO words are relevance recommendations, NOT verified live Singapore search-volume data.
+Do not include brand names, trademarks or brand-authorization statements in consumer copy. Do not infer authorization or erase actual product logos.
 Description: Emotional Hook, Why Pet Parents Love It, Perfect For, Product Details, Call to Action. Start with an authentic practical pain point; use empathetic benefits without guilt, fear, medical, anxiety-treatment or health guarantees.
 Image prompt: include "Use the uploaded original product images as the exact visual reference." The user must supply original images for actual image generation; imported display images are not certified originals.
 Preserve exact shape, structure, colour, material appearance, quantity, accessories, patterns, logo, proportions and real function. Change only background, lighting, composition, realistic shadows or reasonable pet interaction. 1:1 aspect ratio. Never remove logos to evade IP review.
 Video: follow the exact supplied timeline and clip durations. Every complete independent English prompt includes Reference Image Requirement, Scene Description, Exact Product Preservation, Pet/Owner Action, Camera Movement, Lighting and Environment, Realistic Motion, Emotional Focus, Duration, 9:16 Aspect Ratio, Negative Constraints.
 Every prompt includes "Use the uploaded product main image as the primary visual reference. Preserve the exact product shape, colours, materials, proportions, accessories, quantity and functional details." State the duration as "N seconds". Keep product identity consistent. No impossible product actions.
 10s must include hook, function, benefit and CTA in one clip; longer durations expand natural scenes, interaction and CTA. No supplier contacts, procurement URLs, factory pitches or purchasing prices in consumer copy. No unsupported No.1, Best Seller, guaranteed, medical or safety claims.`;
+export function stripBrandAttributes(details: string): string {
+  return details
+    .split("\n")
+    .filter(
+      (line) =>
+        !/^\s*(?:品牌|商标|品牌\s*\/\s*商标|brand(?:\s*name)?|trademark)\s*[:：]/i.test(
+          line,
+        ),
+    )
+    .join("\n");
+}
 export function buildDesktopProductPrompt(input: {
   duration: VideoDuration;
   title: string;
@@ -42,7 +54,7 @@ export function buildDesktopProductPrompt(input: {
     references: input.imageIds,
     sellerConfirmedInputs: {
       title: input.title,
-      details: input.details,
+      details: stripBrandAttributes(input.details),
       description: input.description,
     },
     selectedSku: selected

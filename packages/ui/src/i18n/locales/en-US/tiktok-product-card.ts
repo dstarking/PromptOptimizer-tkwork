@@ -1,6 +1,15 @@
 const messages = {
   tiktokProductCard: {
     desktop: {
+      streamPreview: "Live generation preview",
+      stream: {
+        waiting: "Waiting for model response…",
+        processing: "Model is processing…",
+        receiving: "Receiving content…",
+        validating: "Validating result…",
+        repairing: "Repairing video timeline…",
+        failed: "Generation failed. Received content is retained.",
+      },
       emptyResult: "Prepare at least one product image, select a SKU and confirm the facts before generating.",
       images: "Product images (at least one)",
       imagesReady: "{count} product images ready. Add or replace images if needed.",

@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.12.3] - 2026-10-09
+- EN: Stream Windows product-card generation with live previews and readable errors; remove brand authorization inputs. See [Release Notes (EN)](releases/v2.12.3.en.md).
+- 中文：Windows 商品卡支持流式预览与真实错误提示，移除品牌授权输入。参见 [版本说明（中文）](releases/v2.12.3.zh-CN.md)。
+
 ## [2.12.2] - 2026-10-09
 - EN: Automatically download usable product references after link collection, prioritize selected SKU images, and fall back to manual upload. See [Release Notes (EN)](releases/v2.12.2.en.md).
 - 中文：链接采集后自动导入可用商品参考图，优先使用目标 SKU 图片，无法获取时提示手动上传。参见 [版本说明（中文）](releases/v2.12.2.zh-CN.md)。

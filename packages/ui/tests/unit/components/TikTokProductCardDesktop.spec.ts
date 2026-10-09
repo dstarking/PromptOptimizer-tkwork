@@ -6,6 +6,7 @@ import {
   type EnhancedProductCardResult,
   type ProductSnapshot,
   type VideoDuration,
+  type StreamHandlers,
 } from "@prompt-optimizer/core";
 import Desktop from "../../../src/components/tiktok-mode/TikTokProductCardDesktop.vue";
 import SelectWithConfig from "../../../src/components/SelectWithConfig.vue";
@@ -16,7 +17,13 @@ const mocks = vi.hoisted(() => ({
   warning: vi.fn(),
   history: undefined as string | undefined,
 }));
-vi.mock("vue-i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("vue-i18n", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("vue-i18n")>()),
+  useI18n: () => ({
+    t: (key: string, params?: { error?: string }) =>
+      params?.error ? key + ": " + params.error : key,
+  }),
+}));
 vi.mock("../../../src/router", () => ({
   router: {
     currentRoute: {
@@ -57,8 +64,10 @@ type State = {
   confirmed: boolean;
   preparing: boolean;
   result?: EnhancedProductCardResult;
-  brandName: string;
-  brandAuthorized: boolean;
+  streamText: string;
+  streamPhase: string;
+  generating: boolean;
+  error: string;
   images: {
     id: string;
     sourceId?: string;
@@ -146,7 +155,14 @@ async function setup(
       connectionConfig: {},
     },
   ]);
-  responses.forEach((raw) => testPrompt.mockResolvedValueOnce(raw));
+  responses.forEach((raw) =>
+    testPrompt.mockImplementationOnce(
+      async (_system, _user, _model, callbacks: StreamHandlers) => {
+        callbacks.onToken(raw);
+        callbacks.onComplete();
+      },
+    ),
+  );
   const set = vi.fn(),
     get = vi
       .fn()
@@ -171,7 +187,7 @@ async function setup(
       provide: {
         services: ref({
           modelManager: { getEnabledModels },
-          promptService: { testPrompt },
+          promptService: { testPromptStream: testPrompt },
           preferenceService: { get, set },
         }),
         openModelManager,
@@ -220,6 +236,111 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Windows desktop product-card interactions", () => {
+  it("shows tokens before completion and only saves after the structured result validates", async () => {
+    const { state, wrapper, testPrompt, set } = await setup([]);
+    let callbacks!: StreamHandlers;
+    let finish!: () => void;
+    testPrompt.mockImplementationOnce(
+      (_s, _u, _m, handlers: StreamHandlers) => {
+        callbacks = handlers;
+        return new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      },
+    );
+    const pending = state.generate();
+    expect(state.streamPhase).toBe("waiting");
+    callbacks.onReasoningToken?.("reasoning");
+    expect(state.streamPhase).toBe("processing");
+    const raw = JSON.stringify(output());
+    callbacks.onToken(raw.slice(0, 40));
+    await flushPromises();
+    expect(state.streamText).toBe(raw.slice(0, 40));
+    expect(state.streamPhase).toBe("receiving");
+    expect(wrapper.find('[data-testid="product-card-stream"]').exists()).toBe(
+      true,
+    );
+    expect(state.result).toBeUndefined();
+    expect(set).not.toHaveBeenCalled();
+    callbacks.onToken(raw.slice(40));
+    callbacks.onComplete();
+    finish();
+    await pending;
+    expect(state.result?.title.text).toBe("Pet Hair Lint Roller");
+    expect(set).toHaveBeenCalledOnce();
+    expect(set.mock.calls[0][1][0].desktop).not.toHaveProperty("brandName");
+    expect(set.mock.calls[0][1][0].desktop).not.toHaveProperty(
+      "brandAuthorized",
+    );
+  });
+  it("retains partial text and displays a structured callback error without saving", async () => {
+    const { state, testPrompt, set } = await setup([]);
+    testPrompt.mockImplementationOnce(
+      async (_s, _u, _m, callbacks: StreamHandlers) => {
+        callbacks.onToken("partial response");
+        callbacks.onError({
+          message: "Model does not support images",
+        } as never);
+      },
+    );
+    await state.generate();
+    expect(state.streamText).toBe("partial response");
+    expect(state.streamPhase).toBe("failed");
+    expect(state.error).not.toContain("[object Object]");
+    expect(state.error).toContain("Model does not support images");
+    expect(state.result).toBeUndefined();
+    expect(set).not.toHaveBeenCalled();
+  });
+  it("formats IPC rejection details and never persists malformed JSON", async () => {
+    const { state, testPrompt, set } = await setup([]);
+    testPrompt.mockRejectedValueOnce({
+      message: "API quota exhausted",
+      code: "QUOTA_ERROR",
+    });
+    testPrompt.mockImplementationOnce(
+      async (_s, _u, _m, callbacks: StreamHandlers) => {
+        callbacks.onToken("not valid JSON");
+        callbacks.onComplete();
+      },
+    );
+    await state.generate();
+    expect(state.error).not.toContain("[object Object]");
+    expect(state.error).toContain("API quota exhausted");
+    expect(state.streamPhase).toBe("failed");
+    await state.generate();
+    expect(state.result).toBeUndefined();
+    expect(state.streamText).toBe("not valid JSON");
+    expect(set).not.toHaveBeenCalled();
+  });
+  it("supports completion content and ignores tokens from a superseded generation", async () => {
+    const { state, testPrompt, set } = await setup([]);
+    testPrompt.mockImplementationOnce(
+      async (_s, _u, _m, callbacks: StreamHandlers) => {
+        callbacks.onComplete({ content: JSON.stringify(output()) } as never);
+      },
+    );
+    await state.generate();
+    expect(state.result?.title.text).toBe("Pet Hair Lint Roller");
+    let callbacks!: StreamHandlers;
+    let finish!: () => void;
+    testPrompt.mockImplementationOnce(
+      (_s, _u, _m, handlers: StreamHandlers) => {
+        callbacks = handlers;
+        return new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+      },
+    );
+    const pending = state.generate();
+    state.clear();
+    callbacks.onToken(JSON.stringify(output()));
+    callbacks.onComplete();
+    finish();
+    await pending;
+    expect(state.streamText).toBe("");
+    expect(state.result).toBeUndefined();
+    expect(set).toHaveBeenCalledOnce();
+  });
   it("automatically imports public images after collecting and passes their bytes to generation", async () => {
     const { state, wrapper, testPrompt } = await setup([], [], false);
     const fetchImage = vi.mocked(window.electronAPI!.productImport!.fetchImage);
@@ -246,7 +367,7 @@ describe("Windows desktop product-card interactions", () => {
     await vi.waitFor(() => expect(state.preparing).toBe(false));
     state.confirmed = true;
     await state.generate();
-    expect(testPrompt.mock.calls[0][3]).toEqual(
+    expect(testPrompt.mock.calls[0][4]).toEqual(
       state.images.map((i) => i.input),
     );
   });
@@ -403,13 +524,13 @@ describe("Windows desktop product-card interactions", () => {
     expect(state.result?.mainImagePrompt).toEqual(broken.mainImagePrompt);
     expect(state.result?.video.clips[0].end).toBe(10);
   });
-  it("clears stale brand authorization with the current input", async () => {
-    const { state } = await setup();
-    state.brandName = "Old brand";
-    state.brandAuthorized = true;
+  it("removes brand inputs and clears stream preview with current input", async () => {
+    const { state, wrapper } = await setup();
+    expect(wrapper.html()).not.toContain("desktop.authorized");
+    expect(wrapper.html()).not.toContain("desktop.brand");
+    state.streamText = "partial";
     state.clear();
-    expect(state.brandName).toBe("");
-    expect(state.brandAuthorized).toBe(false);
+    expect(state.streamText).toBe("");
     expect(state.duration).toBe(10);
     expect(state.images).toEqual([]);
   });

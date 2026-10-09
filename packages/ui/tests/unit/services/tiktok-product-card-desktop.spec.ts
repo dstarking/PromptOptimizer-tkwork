@@ -11,6 +11,27 @@ import {
   TIKTOK_PRODUCT_CARD_HISTORY_KEY,
 } from "../../../src/utils/tiktok-product-card-history";
 describe("desktop prompts and backward compatibility", () => {
+  it("omits brand attribute lines, including old saved inputs, while retaining product facts", () => {
+    const prompt = JSON.parse(
+      buildDesktopProductPrompt({
+        duration: 10,
+        title: "Pet toy",
+        description: "",
+        imageIds: ["ref"],
+        details:
+          "品牌: Acme\nBrand name: Example\n商标：Trademark\n材质: Cotton\n尺寸: 10cm",
+      }),
+    );
+    expect(prompt.sellerConfirmedInputs.details).toBe(
+      "材质: Cotton\n尺寸: 10cm",
+    );
+    expect(DESKTOP_PRODUCT_CARD_SYSTEM_PROMPT).toContain(
+      "Do not include brand names",
+    );
+    expect(DESKTOP_PRODUCT_CARD_SYSTEM_PROMPT).toContain(
+      "Do not infer authorization or erase actual product logos",
+    );
+  });
   it("converts CDN WebP losslessly to PNG while leaving existing JPEG/PNG input untouched", async () => {
     const close = vi.fn(),
       drawImage = vi.fn();
