@@ -214,6 +214,13 @@ interface DataAPI {
 
 // 完整的ElectronAPI接口
 interface ElectronAPI {
+  productImport?: {
+    capability: 'windows-product-card-v1'
+    checkEnvironment(): Promise<{ browsers: Array<{ instance_id?: string; id?: string; browser_instance_id?: string; label?: string }> }>
+    collectProduct(url: string, options: { taskId: string; browser: string }): Promise<import('@prompt-optimizer/core').ProductSnapshot>
+    cancelCollect(taskId: string): Promise<void>
+    fetchImage(url: string): Promise<{ mime: string; data: string }>
+  }
   app: AppAPI
   updater: UpdaterAPI
   shell: ShellAPI

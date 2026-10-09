@@ -23,6 +23,12 @@ const IPC_EVENTS = {
 
 const REMOTE_STORAGE_CHANNEL = 'remote-storage:invoke';
 
+const productImportCall = async (method, ...args) => {
+  const result = await ipcRenderer.invoke('product-import:invoke', method, ...args);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+};
+
 // 简单的超时包装器，避免过度设计
 const withTimeout = (promise, timeoutMs = 30000) => {
   return Promise.race([
@@ -1235,6 +1241,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Add an identifier so the frontend knows it's running in Electron
   isElectron: true,
+  ...(process.platform === 'win32' ? { productImport: {
+    capability: 'windows-product-card-v1',
+    checkEnvironment: () => productImportCall('check'),
+    collectProduct: (url, options) => productImportCall('collect', url, options),
+    cancelCollect: (taskId) => productImportCall('cancel', taskId),
+    fetchImage: (url) => productImportCall('image', url),
+  } } : {}),
 
   // Preference Service interface
   preference: {

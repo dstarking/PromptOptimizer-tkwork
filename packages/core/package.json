@@ -19,7 +19,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:gate": "vitest run tests/unit/utils/vcr.spec.ts tests/unit/utils/llm-mock-service.spec.ts",
+    "test:gate": "vitest run tests/unit/utils/vcr.spec.ts tests/unit/utils/llm-mock-service.spec.ts tests/unit/product/product-card.spec.ts",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "typecheck": "tsc -p tsconfig.json --noEmit"

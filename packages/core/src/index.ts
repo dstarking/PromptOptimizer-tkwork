@@ -293,4 +293,8 @@ export { VariableExtractionService, createVariableExtractionService } from './se
 // 🆕 导出变量值生成服务相关
 export * from './services/variable-value-generation/types'
 export * from './services/variable-value-generation/errors'
+export * from './services/product-import/types'
+export * from './services/product-import/normalize'
+export * from './services/product-import/video'
+export * from './services/product-compliance/index'
 export { VariableValueGenerationService, createVariableValueGenerationService } from './services/variable-value-generation/service'

@@ -880,6 +880,7 @@ function createFavoriteErrorResponse(error) {
 
 // --- High-Level IPC Service Handlers ---
 function setupIPC() {
+  require('./services/browserskill/product-import').registerProductImport(ipcMain, () => mainWindow);
   console.log('[Main Process] Setting up high-level service IPC handlers...');
   setupPreferenceHandlers();
   setupRemoteStorageHandlers(ipcMain, {

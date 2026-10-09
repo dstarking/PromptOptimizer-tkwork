@@ -2,6 +2,10 @@
 
 Full release narratives now live in versioned files under `releases/`. This file stays as the index and summary entry point.
 
+## [2.12.0] - 2026-10-09
+- EN: Windows desktop 1688 import and SKU confirmation, four English product-card assets, validated video durations and advisory compliance checks. See [Release Notes (EN)](releases/v2.12.0.en.md).
+- 中文：Windows 桌面新增 1688 采集与 SKU 核对、四项英文商品卡内容、视频时长校验及辅助合规检查。参见 [版本说明（中文）](releases/v2.12.0.zh-CN.md)。
+
 ## [2.11.15] - 2026-10-03
 - EN: This patch limits TikTok product-card results to one optimized title, one optimized description, and one selected best main-image prompt, while filtering unrequested model sections from the UI. See [Release Notes (EN)](releases/v2.11.15.en.md).
 - 中文：本次补丁将 TikTok 商品卡结果收缩为一个优化标题、一个优化描述和一个筛选后的最佳主图提示词，并过滤模型额外返回的无关分块。参见 [版本说明（中文）](releases/v2.11.15.zh-CN.md)。

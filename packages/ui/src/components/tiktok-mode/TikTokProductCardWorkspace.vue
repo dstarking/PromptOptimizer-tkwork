@@ -1,5 +1,6 @@
 <template>
-  <div class="tiktok-product-card-workspace" @paste="handlePaste">
+  <TikTokProductCardDesktop v-if="desktopEnhanced" />
+  <div v-else class="tiktok-product-card-workspace" @paste="handlePaste">
     <div class="tiktok-product-card-header">
       <div>
         <NText tag="h1" class="tiktok-product-card-title">
@@ -215,6 +216,12 @@ import {
 import type { ImageInputRef } from '@prompt-optimizer/core'
 
 import MarkdownRenderer from '../MarkdownRenderer.vue'
+import TikTokProductCardDesktop from './TikTokProductCardDesktop.vue'
+const desktopEnhanced = computed(() => {
+  if (typeof window === 'undefined' || window.electronAPI?.productImport?.capability !== 'windows-product-card-v1') return false
+  const id = routerInstance.currentRoute.value.query.history
+  return !historyEntries.value.some(entry => entry.id === id && !entry.desktop)
+})
 import TextModelQuickSwitch from '../TextModelQuickSwitch.vue'
 import { useWorkspaceModelSelection } from '../../composables/workspaces/useWorkspaceModelSelection'
 import { useClipboard } from '../../composables/ui/useClipboard'

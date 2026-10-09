@@ -1,20 +1,20 @@
 {
   "name": "@prompt-optimizer/desktop",
-  "version": "2.11.15",
+  "version": "2.12.0",
   "description": "Desktop application for Prompt Optimizer",
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/linshenkx/prompt-optimizer.git"
+    "url": "https://github.com/dstarking/PromptOptimizer-tkwork.git"
   },
   "scripts": {
     "build": "pnpm run build:web && pnpm run package",
     "build:ci": "pnpm run build:web && pnpm run package:ci",
     "build:web": "cd ../web && cross-env ELECTRON_BUILD=true vite build --base=./ && node -e \"const fs=require('fs'),path=require('path'); const src='dist',dest='../desktop/web-dist'; if(fs.existsSync(dest)) fs.rmSync(dest,{recursive:true}); fs.cpSync(src,dest,{recursive:true}); console.log('Web files copied to desktop/web-dist');\"",
     "package": "electron-builder",
-    "package:ci": "electron-builder --publish never",
+    "package:ci": "electron-builder --win nsis --x64 --publish never",
     "dev": "cross-env NODE_ENV=development electron .",
-    "test": "node --test config/*.test.js",
+    "test": "node --test config/*.test.js services/browserskill/*.test.js",
     "logs:view": "node -e \"const path=require('path');const os=require('os');const {execSync}=require('child_process');const logDir=path.join(os.homedir(),'AppData','Roaming','PromptOptimizer','logs');console.log('日志目录:',logDir);try{execSync('explorer '+logDir);}catch(e){console.log('请手动打开:',logDir);}\"",
     "logs:clean": "node -e \"const fs=require('fs');const path=require('path');const os=require('os');const logDir=path.join(os.homedir(),'AppData','Roaming','PromptOptimizer','logs');if(fs.existsSync(logDir)){fs.rmSync(logDir,{recursive:true});console.log('日志已清理');}else{console.log('日志目录不存在');}\""
   },
@@ -44,20 +44,20 @@
       "preload.js",
       "remote-storage.js",
       "config/**/*",
+      "services/browserskill/product-import.js",
       "icons/**/*",
       "web-dist/**/*",
       "node_modules/**/*"
     ],
     "publish": {
       "provider": "github",
-      "owner": "linshenkx",
-      "repo": "prompt-optimizer",
+      "owner": "dstarking",
+      "repo": "PromptOptimizer-tkwork",
       "private": false
     },
     "win": {
       "target": [
-        "nsis",
-        "zip"
+        "nsis"
       ],
       "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
       "icon": "icons/app-icon.ico"

@@ -22,6 +22,7 @@ test('desktop preload IPC channels have main-process handlers', () => {
   const main = [
     readText('packages/desktop/main.js'),
     readText('packages/desktop/remote-storage.js'),
+    readText('packages/desktop/services/browserskill/product-import.js'),
   ].join('\n')
 
   const preloadChannels = collectMatches(preload, [
@@ -261,19 +262,19 @@ test('desktop release jobs keep repository metadata and updater publish config a
     return workflow.slice(start, end)
   }
 
-  const windowsJob = jobBlock('build-windows', 'build-macos')
-  const macosJob = jobBlock('build-macos', 'build-linux')
-  const linuxJob = jobBlock('build-linux', 'build-extension')
+  const windowsJob = jobBlock('build-windows', 'publish-release')
 
   assert.match(windowsJob, /\$pkgJson\.repository\.url\s*=\s*\$repoUrl/)
   assert.match(windowsJob, /\$pkgJson\.build\.publish\.owner\s*=\s*\$repoOwner/)
   assert.match(windowsJob, /\$pkgJson\.build\.publish\.repo\s*=\s*\$repoName/)
 
-  for (const [name, job] of [['build-macos', macosJob], ['build-linux', linuxJob]]) {
-    assert.match(job, /\.repository\.url\s*=\s*\$repo_url/, `${name} must update repository.url`)
-    assert.match(job, /\.build\.publish\.owner\s*=\s*\$repo_owner/, `${name} must update publish owner`)
-    assert.match(job, /\.build\.publish\.repo\s*=\s*\$repo_name/, `${name} must update publish repo`)
-  }
+  assert.doesNotMatch(workflow, /^  build-(macos|linux|extension):/m)
+  assert.doesNotMatch(workflow, /EXTENSION_ZIP_COUNT|Chrome extension zip asset/)
+  assert.match(workflow, /needs: \[prepare-release, build-windows\]/)
+  assert.doesNotMatch(windowsJob, /dist\/PromptOptimizer-\*\.zip/)
+  const desktop = JSON.parse(readText('packages/desktop/package.json'))
+  assert.deepEqual(desktop.build.win.target, ['nsis'])
+  assert.match(desktop.scripts['package:ci'], /--win nsis --x64 --publish never/)
 })
 
 test('desktop remote storage handler routes S3-compatible operations through AWS SDK commands', async () => {
